@@ -97,6 +97,7 @@ class Dashboard {
                 <th>당월</th>
                 <th>달성률</th>
                 <th>전월비<br>(마감)</th>
+                <th rowspan="3" style="background: rgba(102, 126, 234, 0.1); font-weight: 700;">💬 AI 피드백</th>
             </tr>
         `;
     }
@@ -145,6 +146,9 @@ class Dashboard {
                 <!-- Subscription Growth Qty (Cols 19-20) -->
                 <td class="text-center font-bold">${item.subQtyAchieve.toFixed(1)}%</td>
                 <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subQtyMoM.toFixed(1)}%</td>
+                
+                <!-- AI Feedback (Col 22) -->
+                <td class="ai-feedback" style="font-size: 0.85rem; max-width: 250px; padding: 0.75rem;">${this.generateAIFeedback(item)}</td>
             `;
             tbody.appendChild(row);
         });
@@ -193,6 +197,7 @@ class Dashboard {
                             <td class="text-center" style="background: ${item.achievement >= 100 ? 'rgba(16, 185, 129, 0.1)' : 'transparent'}">${item.achievement.toFixed(1)}%</td>
                             <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY >= 0 ? '+' : ''}${item.growthYoY.toFixed(1)}%</td>
                             <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM >= 0 ? '+' : ''}${item.growthMoM.toFixed(1)}%</td>
+                            <td class="ai-feedback" style="font-size: 0.85rem; max-width: 200px;">${this.generateAIFeedback(item)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -1048,6 +1053,52 @@ class Dashboard {
             if (chart) chart.destroy();
         });
         this.charts = {};
+    }
+
+    // Generate AI Feedback based on performance data
+    generateAIFeedback(item) {
+        const feedbacks = [];
+        
+        // 달성률 기반 피드백
+        const achievement = item.achievement || item.salesAchieve || item.subAmtAchieve || 0;
+        if (achievement >= 150) {
+            feedbacks.push('🌟 탁월한 성과');
+        } else if (achievement >= 120) {
+            feedbacks.push('✅ 목표 초과 달성');
+        } else if (achievement >= 100) {
+            feedbacks.push('👍 목표 달성');
+        } else if (achievement >= 80) {
+            feedbacks.push('⚠️ 개선 필요');
+        } else {
+            feedbacks.push('🔴 심각한 저조');
+        }
+        
+        // 성장률 기반 피드백
+        const growthYoY = item.growthYoY || item.salesYoY || 0;
+        const growthMoM = item.growthMoM || item.salesMoM || item.subAmtMoM || 0;
+        
+        if (growthYoY > 30) {
+            feedbacks.push('📈 전년 대비 고성장');
+        } else if (growthYoY < -10) {
+            feedbacks.push('📉 전년 대비 하락');
+        }
+        
+        if (growthMoM > 20) {
+            feedbacks.push('⬆️ 전월 대비 급성장');
+        } else if (growthMoM < -10) {
+            feedbacks.push('⬇️ 전월 대비 감소');
+        }
+        
+        // 기본 피드백 - 최소 2개 유지
+        if (feedbacks.length === 1) {
+            if (achievement >= 100) {
+                feedbacks.push('🔍 지속 유지 필요');
+            } else {
+                feedbacks.push('🔍 개선 전략 필요');
+            }
+        }
+        
+        return feedbacks.join(' | ');
     }
 }
 
