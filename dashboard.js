@@ -12,14 +12,14 @@ class Dashboard {
 
     // Initialize dashboard with data
     init() {
-        // Fallback or general init if needed
+        this.renderMasterHeader();
     }
 
     // Render main sections
     renderSection(sectionName) {
-        if (!this.dataProcessor.performanceData) return;
-        const data = this.dataProcessor.performanceData[sectionName];
-        if (!data) return;
+        // PERMISSIVE: Allow rendering even if no data (for headers)
+        const perfData = this.dataProcessor.performanceData || {};
+        const data = perfData[sectionName] || [];
 
         switch (sectionName) {
             case 'master':
@@ -36,67 +36,112 @@ class Dashboard {
 
     // Render sub-sections
     renderSubSection(parentSection, subSectionName) {
-        if (!this.dataProcessor.performanceData) return;
+        // PERMISSIVE: Allow rendering even if no data (for headers)
+        const perfData = this.dataProcessor.performanceData || {};
         
         let data;
         if (parentSection === 'sales') {
             data = subSectionName === 'branch' ? 
-                   (this.dataProcessor.performanceData.salesBranch || []) :
-                   (this.dataProcessor.performanceData.sales || []);
+                   (perfData.salesBranch || []) :
+                   (perfData.sales || []);
             this.renderSalesTable(data, subSectionName);
         } else if (parentSection === 'subscription') {
             data = subSectionName === 'branch' ? 
-                   (this.dataProcessor.performanceData.subscriptionBranch || []) :
-                   (this.dataProcessor.performanceData.subscription || []);
+                   (perfData.subscriptionBranch || []) :
+                   (perfData.subscription || []);
             this.renderSubscriptionTable(data, subSectionName);
         }
     }
 
-    // Render MASTER 관리 Table (Complex Nested Structure)
-    renderMasterTable(data) {
+    // Render Master Table Header (Persistent)
+    renderMasterHeader() {
         const thead = document.getElementById('master-thead');
-        const tbody = document.getElementById('master-tbody');
-        if (!thead || !tbody) return;
+        if (!thead) return;
 
-        // Create Master Headers based on screenshot
+        // Create Master Headers based on NEW screenshot (21 cols)
         thead.innerHTML = `
             <tr class="nested-header">
                 <th rowspan="3">구분</th>
                 <th rowspan="3">목표</th>
                 <th colspan="6">판매금액</th>
-                <th colspan="2" rowspan="1">구독 (건)</th>
-                <th rowspan="3">랭킹</th>
+                <th colspan="13">구독</th>
             </tr>
             <tr class="nested-header">
-                <th rowspan="2">전년 마감</th>
-                <th rowspan="2">전월 마감</th>
+                <th rowspan="2">전년<br>마감</th>
+                <th rowspan="2">전월<br>마감</th>
                 <th rowspan="2">당월</th>
-                <th rowspan="2">달성률</th>
-                <th colspan="2">신장률</th>
-                <th rowspan="2">금액</th>
-                <th rowspan="2">수량</th>
+                <th colspan="3" class="highlight-header">신장 및 달성</th>
+                <th colspan="2">목표</th>
+                <th colspan="4">금액</th>
+                <th colspan="3" class="highlight-header">신장 및 달성(금액)</th>
+                <th colspan="2">수량</th>
+                <th colspan="2" class="highlight-header">신장 및 달성(수량)</th>
             </tr>
             <tr class="nested-header">
-                <th>전년 마감比</th>
-                <th>전월마감比</th>
+                <th>달성률</th>
+                <th>전년비<br>(마감)</th>
+                <th>전월비<br>(마감)</th>
+                <th>목표<br>(금액)</th>
+                <th>목표<br>(수량)</th>
+                <th>전월마감</th>
+                <th>당월</th>
+                <th>일시불</th>
+                <th>금액 합</th>
+                <th>달성률</th>
+                <th>전월비<br>(마감)</th>
+                <th>비중</th>
+                <th>전월마감</th>
+                <th>당월</th>
+                <th>달성률</th>
+                <th>전월비<br>(마감)</th>
             </tr>
         `;
+    }
+
+    // Render Master Table Body
+    renderMasterTable(data) {
+        const tbody = document.getElementById('master-tbody');
+        if (!tbody) return;
+
+        // Ensure header is there (idempotent)
+        this.renderMasterHeader();
 
         tbody.innerHTML = '';
         data.forEach(item => {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${item.group}</strong></td>
+                <!-- Sales (Cols 1-7) -->
                 <td class="text-right">${this.formatCurrency(item.target)}</td>
                 <td class="text-right">${this.formatCurrency(item.prevYearClose)}</td>
                 <td class="text-right">${this.formatCurrency(item.prevMonthClose)}</td>
-                <td class="text-right" style="background: rgba(102, 126, 234, 0.1); font-weight: bold;">${this.formatCurrency(item.currentMonth)}</td>
-                <td class="text-center">${item.achievement.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY >= 0 ? '+' : ''}${item.growthYoY.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM >= 0 ? '+' : ''}${item.growthMoM.toFixed(1)}%</td>
-                <td class="text-right">${this.formatCurrency(item.subAmount)}</td>
-                <td class="text-right">${item.subQty}건</td>
-                <td class="text-center">-</td>
+                <td class="text-right font-bold bg-blue-50">${this.formatCurrency(item.currentMonth)}</td>
+                <td class="text-center font-bold">${item.achievement.toFixed(1)}%</td>
+                <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY.toFixed(1)}%</td>
+                <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM.toFixed(1)}%</td>
+                
+                <!-- Subscription Target (Cols 8-9) -->
+                <td class="text-right">${this.formatCurrency(item.subTargetAmt)}</td>
+                <td class="text-right">${this.formatNumber(item.subTargetQty)}</td>
+                
+                <!-- Subscription Amount (Cols 10-13) -->
+                <td class="text-right">${this.formatCurrency(item.subAmtPrev)}</td>
+                <td class="text-right">${this.formatCurrency(item.subAmtCurrent)}</td>
+                <td class="text-right">${this.formatCurrency(item.subOneTime)}</td>
+                <td class="text-right font-bold">${this.formatCurrency(item.subAmtTotal)}</td>
+                
+                <!-- Subscription Growth Amt (Cols 14-16) -->
+                <td class="text-center font-bold">${item.subAmtAchieve.toFixed(1)}%</td>
+                <td class="text-center" style="color: ${item.subAmtMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subAmtMoM.toFixed(1)}%</td>
+                <td class="text-center">${item.subShare.toFixed(1)}%</td>
+                
+                <!-- Subscription Qty (Cols 17-18) -->
+                <td class="text-right">${this.formatNumber(item.subQtyPrev)}</td>
+                <td class="text-right font-bold">${this.formatNumber(item.subQtyCurrent)}</td>
+                
+                <!-- Subscription Growth Qty (Cols 19-20) -->
+                <td class="text-center font-bold">${item.subQtyAchieve.toFixed(1)}%</td>
+                <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subQtyMoM.toFixed(1)}%</td>
             `;
             tbody.appendChild(row);
         });
@@ -320,6 +365,11 @@ class Dashboard {
 
     // Helper: Format currency
     formatCurrency(val) {
+        return new Intl.NumberFormat('ko-KR').format(Math.round(val));
+    }
+
+    // Helper: Format number
+    formatNumber(val) {
         return new Intl.NumberFormat('ko-KR').format(Math.round(val));
     }
 

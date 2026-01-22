@@ -111,6 +111,7 @@ class DataProcessor {
             if (!row || row.length === 0 || !row[0]) return null;
             return {
                 group: row[0],
+                // Sales
                 target: this.parseNumber(row[1]),
                 prevYearClose: this.parseNumber(row[2]),
                 prevMonthClose: this.parseNumber(row[3]),
@@ -118,8 +119,21 @@ class DataProcessor {
                 achievement: this.parseNumber(row[5]),
                 growthYoY: this.parseNumber(row[6]),
                 growthMoM: this.parseNumber(row[7]),
-                subAmount: this.parseNumber(row[11]),
-                subQty: this.parseNumber(row[20])
+                
+                // Subscription
+                subTargetAmt: this.parseNumber(row[8]),
+                subTargetQty: this.parseNumber(row[9]),
+                subAmtPrev: this.parseNumber(row[10]),
+                subAmtCurrent: this.parseNumber(row[11]),
+                subOneTime: this.parseNumber(row[12]),
+                subAmtTotal: this.parseNumber(row[13]),
+                subAmtAchieve: this.parseNumber(row[14]),
+                subAmtMoM: this.parseNumber(row[15]),
+                subShare: this.parseNumber(row[16]),
+                subQtyPrev: this.parseNumber(row[17]),
+                subQtyCurrent: this.parseNumber(row[18]),
+                subQtyAchieve: this.parseNumber(row[19]),
+                subQtyMoM: this.parseNumber(row[20])
             };
         }).filter(item => item !== null && item.group);
     }
