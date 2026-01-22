@@ -37,6 +37,20 @@
                     <p>종합 실적 및 성과 분석</p>
                 </div>
                 
+                <!-- RAW Data Input Card -->
+                <div class="card" style="margin-bottom: 1.5rem;">
+                    <div class="card-header">
+                        <h3>📝 RAW 데이터 입력</h3>
+                    </div>
+                    <div class="card-content">
+                        <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">엑셀에서 복사한 MASTER 데이터를 아래에 붙여넣으세요 (21개 컬럼)</p>
+                        <textarea id="master-raw-input" class="raw-data-input" rows="8" placeholder="구분	목표	전년마감	전월마감	당월	...(엑셀에서 복사하여 붙여넣기)"></textarea>
+                        <button class="btn btn-primary btn-large" id="load-master-raw-btn" style="margin-top: 1rem;">
+                            <span>⚡ 데이터 로드</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header">
                         <h3>📊 종합 평가 테이블</h3>
@@ -67,6 +81,17 @@
                 </div>
 
                 <div id="sales-all-content" class="sub-section active">
+                    <!-- RAW Data Input -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3>📝 RAW 데이터 입력 (종합)</h3>
+                        </div>
+                        <div class="card-content">
+                            <textarea id="sales-all-raw-input" class="raw-data-input" rows="6" placeholder="구분	목표	전년마감	전월마감	당월	달성률	전년比	전월比"></textarea>
+                            <button class="btn btn-primary" id="load-sales-all-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3>📊 판매금액 종합</h3>
@@ -78,6 +103,17 @@
                 </div>
 
                 <div id="sales-branch-content" class="sub-section">
+                    <!-- RAW Data Input -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3>📝 RAW 데이터 입력 (지점별)</h3>
+                        </div>
+                        <div class="card-content">
+                            <textarea id="sales-branch-raw-input" class="raw-data-input" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표	..."></textarea>
+                            <button class="btn btn-primary" id="load-sales-branch-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3>🏪 지점별 실적</h3>
@@ -100,6 +136,17 @@
                 </div>
 
                 <div id="subscription-all-content" class="sub-section active">
+                    <!-- RAW Data Input -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3>📝 RAW 데이터 입력 (종합)</h3>
+                        </div>
+                        <div class="card-content">
+                            <textarea id="subscription-all-raw-input" class="raw-data-input" rows="6" placeholder="구분	목표(금액)	목표(수량)	전월마감	당월	..."></textarea>
+                            <button class="btn btn-primary" id="load-subscription-all-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3>📈 구독 종합 실적</h3>
@@ -111,6 +158,17 @@
                 </div>
 
                 <div id="subscription-branch-content" class="sub-section">
+                    <!-- RAW Data Input -->
+                    <div class="card" style="margin-bottom: 1.5rem;">
+                        <div class="card-header">
+                            <h3>📝 RAW 데이터 입력 (지점별)</h3>
+                        </div>
+                        <div class="card-content">
+                            <textarea id="subscription-branch-raw-input" class="raw-data-input" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표(금액)	..."></textarea>
+                            <button class="btn btn-primary" id="load-subscription-branch-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header">
                             <h3>🏪 지점별 구독 현황</h3>

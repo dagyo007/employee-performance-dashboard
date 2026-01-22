@@ -69,6 +69,38 @@ class DataProcessor {
         });
     }
 
+    // Parse raw text data (from textarea paste)
+    parseRawText(text, type) {
+        if (!text || text.trim() === '') {
+            throw new Error('입력된 데이터가 없습니다.');
+        }
+
+        // Split by newlines
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+        
+        // Convert each line to array (split by tabs or multiple spaces)
+        const rows = lines.map(line => {
+            // First try tab separation
+            if (line.includes('\t')) {
+                return line.split('\t').map(cell => cell.trim());
+            }
+            // Otherwise split by 2 or more spaces
+            return line.split(/\s{2,}/).map(cell => cell.trim());
+        });
+
+        // Process based on type
+        switch (type) {
+            case 'master':
+                return this.processMasterData(rows);
+            case 'sales':
+                return this.processSalesData(rows);
+            case 'subscription':
+                return this.processSubscriptionData(rows);
+            default:
+                return rows;
+        }
+    }
+
     // Load and process specific performance data
     async loadPerformanceData(data, type) {
         if (!this.performanceData) this.performanceData = {};

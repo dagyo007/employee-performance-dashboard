@@ -7,19 +7,19 @@ class IncentiveEngine {
         this.ALLOWANCE_POLICY = {
             '이마트': [
                 { min: 0, max: 15, allowance: 20 },
-                { min: 15, max: 25, allowance: 15 }, // 불명확했던 값을 15로 설정
+                { min: 15, max: 25, allowance: 0 },  // 수정: 15→0 (구독비중 15-25%는 수당 없음)
                 { min: 25, max: 35, allowance: 20 },
                 { min: 35, max: 100, allowance: 30 }
             ],
-            '옴플러스': [
+            '홈플러스': [
                 { min: 0, max: 10, allowance: 30 },
-                { min: 10, max: 20, allowance: -10 },
+                { min: 10, max: 20, allowance: 10 },  // 수정: -10→10 (마이너스 수당은 비정상)
                 { min: 20, max: 30, allowance: 20 },
                 { min: 30, max: 100, allowance: 30 }
             ],
             '전자랜드': [
                 { min: 0, max: 10, allowance: 30 },
-                { min: 10, max: 20, allowance: -10 },
+                { min: 10, max: 20, allowance: 10 },  // 수정: -10→10 (마이너스 수당은 비정상)
                 { min: 20, max: 30, allowance: 20 },
                 { min: 30, max: 100, allowance: 30 }
             ]

@@ -107,24 +107,79 @@ class App {
 
     // Setup data input handlers
     setupDataInput() {
-        // Master file upload
-        const masterFileInput = document.getElementById('master-file');
-        masterFileInput.addEventListener('change', (e) => this.handleFileUpload(e, 'master'));
+        // File input handlers
+        document.getElementById('master-file')?.addEventListener('change', (e) => this.handleFileUpload(e, 'master'));
+        document.getElementById('sales-file')?.addEventListener('change', (e) => this.handleFileUpload(e, 'sales'));
+        document.getElementById('subscription-file')?.addEventListener('change', (e) => this.handleFileUpload(e, 'subscription'));
 
-        // Sales file upload
-        const salesFileInput = document.getElementById('sales-file');
-        salesFileInput.addEventListener('change', (e) => this.handleFileUpload(e, 'sales'));
-
-        // Subscription file upload
-        const subscriptionFileInput = document.getElementById('subscription-file');
-        subscriptionFileInput.addEventListener('change', (e) => this.handleFileUpload(e, 'subscription'));
+        // Demo data button
+        document.getElementById('load-demo-btn')?.addEventListener('click', () => this.loadDemoData());
 
         // Clear data button
-        document.getElementById('clear-data-btn').addEventListener('click', () => {
+        document.getElementById('clear-data-btn')?.addEventListener('click', () => {
             if (confirm('모든 데이터를 초기화하시겠습니까?')) {
                 this.clearAllData();
             }
         });
+
+        // Setup RAW data input handlers
+        this.setupRawDataInput();
+    }
+
+    // Setup RAW data input handlers
+    setupRawDataInput() {
+        // MASTER RAW data
+        document.getElementById('load-master-raw-btn')?.addEventListener('click', () => {
+            const rawText = document.getElementById('master-raw-input').value;
+            this.loadRawData(rawText, 'master');
+        });
+
+        // Sales ALL RAW data
+        document.getElementById('load-sales-all-raw-btn')?.addEventListener('click', () => {
+            const rawText = document.getElementById('sales-all-raw-input').value;
+            this.loadRawData(rawText, 'sales');
+        });
+
+        // Sales BRANCH RAW data
+        document.getElementById('load-sales-branch-raw-btn')?.addEventListener('click', () => {
+            const rawText = document.getElementById('sales-branch-raw-input').value;
+            this.loadRawData(rawText, 'sales');
+        });
+
+        // Subscription ALL RAW data
+        document.getElementById('load-subscription-all-raw-btn')?.addEventListener('click', () => {
+            const rawText = document.getElementById('subscription-all-raw-input').value;
+            this.loadRawData(rawText, 'subscription');
+        });
+
+        // Subscription BRANCH RAW data
+        document.getElementById('load-subscription-branch-raw-btn')?.addEventListener('click', () => {
+            const rawText = document.getElementById('subscription-branch-raw-input').value;
+            this.loadRawData(rawText, 'subscription');
+        });
+    }
+
+    // Load RAW data from textarea
+    async loadRawData(rawText, type) {
+        try {
+            this.showLoading(true);
+
+            // Parse RAW text
+            const result = this.dataProcessor.parseRawText(rawText, type);
+
+            // Load into performance data
+            await this.dataProcessor.loadPerformanceData(result, type);
+
+            // Render the appropriate section
+            this.dashboard.renderSection(type);
+
+            this.showToast(`${type.toUpperCase()} 데이터가 성공적으로 로드되었습니다!`, 'success');
+            this.showLoading(false);
+        } catch (error) {
+            console.error('RAW data load error:', error);
+            this.showToast(`데이터 로드 실패: ${error.message}`, 'error');
+            this.showLoading(false);
+        }
     }
 
     // Generic file upload handler
