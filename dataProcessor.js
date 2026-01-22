@@ -201,8 +201,8 @@ class DataProcessor {
             return { data: rows, isBranch };
         }
         
-        // Detect if it's Branch data (18 columns or contains specific headers)
-        const headerRowIdx = rows.findIndex(row => row && (row.includes('담당') || row.includes('지점명') || row.includes('지점')));
+        // Detect header row (for both Branch and Summary data)
+        const headerRowIdx = rows.findIndex(row => row && (row.includes('담당') || row.includes('지점명') || row.includes('지점') || row.includes('구분')));
         if (headerRowIdx === -1) return { data: [], isBranch: false };
 
         const headers = rows[headerRowIdx];
