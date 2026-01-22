@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지점 평가 시스템</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">📍</div>
+                    <h1>지점 평가 시스템</h1>
+                    <span style="margin-left: 1rem; color: var(--color-text-secondary); font-size: 1.125rem; font-weight: 400;">Designed by 황다교</span>
+                </div>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-section="master">MASTER</button>
+                    <button class="nav-tab" data-section="sales">판매금액</button>
+                    <button class="nav-tab" data-section="subscription">구독</button>
+                    <button class="nav-tab" data-section="upload">데이터 로드</button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Master Section -->
+            <section id="master-section" class="section active">
+                <div class="section-header">
+                    <h2>🏆 MASTER 관리</h2>
+                    <p>종합 실적 및 성과 분석</p>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📊 종합 평가 테이블</h3>
+                        <div class="filter-group">
+                            <button class="btn btn-sm btn-primary" id="export-master-btn">Excel 내보내기</button>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container master-table-container">
+                            <!-- Master Table will be injected here -->
+                            <table class="data-table master-table" id="master-table">
+                                <thead id="master-thead"></thead>
+                                <tbody id="master-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sales Section -->
+            <section id="sales-section" class="section">
+                <div class="section-header">
+                    <h2>💰 판매금액 실적</h2>
+                    <div class="sub-nav">
+                        <button class="sub-tab active" data-sub="all">판매금액 (일시불+구독)</button>
+                        <button class="sub-tab" data-sub="branch">지점별</button>
+                    </div>
+                </div>
+
+                <div id="sales-all-content" class="sub-section active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 판매금액 종합</h3>
+                        </div>
+                        <div class="card-content">
+                            <table class="data-table" id="sales-all-table"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sales-branch-content" class="sub-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏪 지점별 실적</h3>
+                        </div>
+                        <div class="card-content">
+                            <table class="data-table" id="sales-branch-table"></table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subscription Section -->
+            <section id="subscription-section" class="section">
+                <div class="section-header">
+                    <h2>📱 구독 실적</h2>
+                    <div class="sub-nav">
+                        <button class="sub-tab active" data-sub="all">구독</button>
+                        <button class="sub-tab" data-sub="branch">지점별</button>
+                    </div>
+                </div>
+
+                <div id="subscription-all-content" class="sub-section active">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📈 구독 종합 실적</h3>
+                        </div>
+                        <div class="card-content">
+                            <table class="data-table" id="subscription-all-table"></table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subscription-branch-content" class="sub-section">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏪 지점별 구독 현황</h3>
+                        </div>
+                        <div class="card-content">
+                            <table class="data-table" id="subscription-branch-table"></table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload/Data Management Section (Previously Upload) -->
+            <section id="upload-section" class="section">
+                <div class="section-header">
+                    <h2>⚙️ 데이터 로드 및 관리</h2>
+                    <p>실적 유형별 데이터를 업로드하세요</p>
+                </div>
+
+                <div class="grid-3">
+                    <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🚀 데모 데이터 체험</h3>
+                    </div>
+                    <div class="card-body">
+                        <p style="margin-bottom: 1.5rem; color: var(--text-muted);">파일이 없으신가요? 이미지 데이터를 기반으로 구성된 데모 데이터를 즉시 로드하여 모든 기능을 확인해 보세요.</p>
+                        <button id="load-demo-btn" class="btn btn-primary" style="width: 100%;">데모 데이터 로드하기</button>
+                    </div>
+                </div>
+                    <!-- Master Upload -->
+                    <div class="card">
+                        <div class="card-header"><h3>🏆 MASTER 데이터</h3></div>
+                        <div class="card-content">
+                            <div class="upload-area" id="master-upload-area">
+                                <div class="upload-icon">📄</div>
+                                <button class="btn btn-secondary" onclick="document.getElementById('master-file').click()">파일 선택</button>
+                                <input type="file" id="master-file" accept=".xlsx,.xls,.json" hidden>
+                                <span class="file-name" id="master-file-name"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sales Upload -->
+                    <div class="card">
+                        <div class="card-header"><h3>💰 판매금액 데이터</h3></div>
+                        <div class="card-content">
+                            <div class="upload-area" id="sales-upload-area">
+                                <div class="upload-icon">📊</div>
+                                <button class="btn btn-secondary" onclick="document.getElementById('sales-file').click()">파일 선택</button>
+                                <input type="file" id="sales-file" accept=".xlsx,.xls,.json" hidden>
+                                <span class="file-name" id="sales-file-name"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subscription Upload -->
+                    <div class="card">
+                        <div class="card-header"><h3>📱 구독 데이터</h3></div>
+                        <div class="card-content">
+                            <div class="upload-area" id="subscription-upload-area">
+                                <div class="upload-icon">📝</div>
+                                <button class="btn btn-secondary" onclick="document.getElementById('subscription-file').click()">파일 선택</button>
+                                <input type="file" id="subscription-file" accept=".xlsx,.xls,.json" hidden>
+                                <span class="file-name" id="subscription-file-name"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="data-preview-card" style="display: none; margin-top: 2rem;">
+                    <div class="card-header">
+                        <h3>📋 최근 로드된 데이터 미리보기</h3>
+                        <button class="btn btn-sm btn-secondary" id="clear-data-btn">모든 데이터 초기화</button>
+                    </div>
+                    <div class="card-content">
+                        <div class="table-container">
+                            <table class="data-table" id="preview-table">
+                                <tbody id="preview-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>© 2026 지점 평가 시스템 | 모든 데이터는 브라우저에서만 처리됩니다</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">처리 중...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="demoData.js"></script>
+    <script src="dataProcessor.js"></script>
+    <script src="evaluationEngine.js"></script>
+    <script src="competitionAnalyzer.js"></script>
+    <script src="dashboard.js"></script>
+    <script src="excelExporter.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
