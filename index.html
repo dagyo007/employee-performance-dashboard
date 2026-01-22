@@ -23,6 +23,7 @@
                     <button class="nav-tab active" data-section="master">MASTER</button>
                     <button class="nav-tab" data-section="sales">판매금액</button>
                     <button class="nav-tab" data-section="subscription">구독</button>
+                    <button class="nav-tab" data-section="analytics">📊 분석 대시보드</button>
                     <button class="nav-tab" data-section="upload">데이터 로드</button>
                 </nav>
             </div>
@@ -175,6 +176,115 @@
                         </div>
                         <div class="card-content">
                             <table class="data-table" id="subscription-branch-table"></table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Dashboard Section -->
+            <section id="analytics-section" class="section">
+                <div class="section-header">
+                    <h2>📊 분석 대시보드</h2>
+                    <p>데이터 시각화 및 순위 분석</p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏪</div>
+                        <div class="stat-content">
+                            <p class="stat-label">총 항목 수</p>
+                            <p class="stat-value" id="analytics-total-count">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <p class="stat-label">평균 달성률</p>
+                            <p class="stat-value" id="analytics-avg-achievement">0%</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <p class="stat-label">평균 성장률</p>
+                            <p class="stat-value" id="analytics-avg-growth">0%</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <p class="stat-label">목표 달성</p>
+                            <p class="stat-value" id="analytics-excellent-count">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 달성률 분포</h3>
+                        </div>
+                        <div class="card-content" style="height: 300px;">
+                            <canvas id="analytics-achievement-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📈 성장률 추이</h3>
+                        </div>
+                        <div class="card-content" style="height: 300px;">
+                            <canvas id="analytics-growth-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rankings -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏆 Top 10 우수 실적</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                 <table class="data-table" id="analytics-top-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>구분</th>
+                                            <th>당월 실적</th>
+                                            <th>달성률</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚠️ Bottom 10 개선 필요</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                <table class="data-table" id="analytics-bottom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>구분</th>
+                                            <th>당월 실적</th>
+                                            <th>달성률</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

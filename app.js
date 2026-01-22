@@ -70,7 +70,7 @@ class App {
             this.currentSection = sectionName;
             
             // Standard render
-            if (['master', 'sales', 'subscription'].includes(sectionName)) {
+            if (['master', 'sales', 'subscription', 'analytics'].includes(sectionName)) {
                 this.dashboard.renderSection(sectionName);
                 
                 // FORCE: Find active sub-tab or default to first one and trigger render

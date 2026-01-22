@@ -1,0 +1,110 @@
+            <!-- Analytics Dashboard Section -->
+            <section id="analytics-section" class="section">
+                <div class="section-header">
+                    <h2>📊 분석 대시보드</h2>
+                    <p>데이터 시각화 및 순위 분석</p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏪</div>
+                        <div class="stat-content">
+                            <p class="stat-label">총 지점 수</p>
+                            <p class="stat-value" id="analytics-total-stores">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-content">
+                            <p class="stat-label">평균 평가 점수</p>
+                            <p class="stat-value" id="analytics-avg-score">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-content">
+                            <p class="stat-label">평균 달성률</p>
+                            <p class="stat-value" id="analytics-avg-achievement">0%</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <p class="stat-label">우수 지점 수</p>
+                            <p class="stat-value" id="analytics-excellent-count">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>📊 점수 분포</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="analytics-score-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏢 채널별 비교</h3>
+                        </div>
+                        <div class="card-content">
+                            <canvas id="analytics-channel-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rankings -->
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>🏆 Top 10 우수 지점</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                <table class="data-table" id="analytics-top-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>지점명</th>
+                                            <th>채널</th>
+                                            <th>총점</th>
+                                            <th>달성률</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>⚠️ Bottom 10 개선 필요 지점</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="table-container">
+                                <table class="data-table" id="analytics-bottom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>지점명</th>
+                                            <th>채널</th>
+                                            <th>총점</th>
+                                            <th>달성률</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
