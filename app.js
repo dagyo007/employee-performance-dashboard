@@ -164,11 +164,24 @@ class App {
         try {
             this.showLoading(true);
 
-            // Parse RAW text
+            // Parse RAW text - this already returns processed data!
             const result = this.dataProcessor.parseRawText(rawText, type);
 
-            // Load into performance data
-            await this.dataProcessor.loadPerformanceData(result, type);
+            // Directly assign to performanceData (no double processing)
+            if (!this.dataProcessor.performanceData) {
+                this.dataProcessor.performanceData = {};
+            }
+
+            if (type === 'sales' || type === 'subscription') {
+                // Handle branch vs summary detection
+                if (result.isBranch) {
+                    this.dataProcessor.performanceData[type + 'Branch'] = result.data;
+                } else {
+                    this.dataProcessor.performanceData[type] = result.data;
+                }
+            } else {
+                this.dataProcessor.performanceData[type] = result;
+            }
 
             // Render the appropriate section
             this.dashboard.renderSection(type);

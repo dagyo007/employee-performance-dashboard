@@ -136,8 +136,8 @@ class DataProcessor {
         const headerRowIdx = rows.findIndex(row => Array.isArray(row) && (row.includes('구분') || row.includes('지점명')));
         if (headerRowIdx === -1) return [];
 
-        // In nested header structures, data usually starts 2 rows after the main header row
-        const dataRows = rows.slice(headerRowIdx + 2);
+        // Data starts from the next row after header (not +2!)
+        const dataRows = rows.slice(headerRowIdx + 1);
 
         return dataRows.map(row => {
             if (!row || row.length === 0 || !row[0]) return null;
