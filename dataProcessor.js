@@ -141,31 +141,60 @@ class DataProcessor {
 
         return dataRows.map(row => {
             if (!row || row.length === 0 || !row[0]) return null;
+            
+            // Parse input values
+            const target = this.parseNumber(row[1]);
+            const prevYearClose = this.parseNumber(row[2]);
+            const prevMonthClose = this.parseNumber(row[3]);
+            const currentMonth = this.parseNumber(row[4]);
+            
+            // Auto-calculate if not provided (or use provided values)
+            const achievement = row[5] ? this.parseNumber(row[5]) : this.calculateAchievementRate(currentMonth, target);
+            const growthYoY = row[6] ? this.parseNumber(row[6]) : this.calculateGrowthRate(currentMonth, prevYearClose);
+            const growthMoM = row[7] ? this.parseNumber(row[7]) : this.calculateGrowthRate(currentMonth, prevMonthClose);
+            
+            // Subscription data
+            const subTargetAmt = this.parseNumber(row[8]);
+            const subTargetQty = this.parseNumber(row[9]);
+            const subAmtPrev = this.parseNumber(row[10]);
+            const subAmtCurrent = this.parseNumber(row[11]);
+            const subOneTime = this.parseNumber(row[12]);
+            const subAmtTotal = this.parseNumber(row[13]);
+            const subQtyPrev = this.parseNumber(row[17]);
+            const subQtyCurrent = this.parseNumber(row[18]);
+            
+            // Auto-calculate subscription metrics
+            const subAmtAchieve = row[14] ? this.parseNumber(row[14]) : this.calculateAchievementRate(subAmtTotal, subTargetAmt);
+            const subAmtMoM = row[15] ? this.parseNumber(row[15]) : this.calculateGrowthRate(subAmtCurrent, subAmtPrev);
+            const subShare = this.parseNumber(row[16]);
+            const subQtyAchieve = row[19] ? this.parseNumber(row[19]) : this.calculateAchievementRate(subQtyCurrent, subTargetQty);
+            const subQtyMoM = row[20] ? this.parseNumber(row[20]) : this.calculateGrowthRate(subQtyCurrent, subQtyPrev);
+            
             return {
                 group: row[0],
                 // Sales
-                target: this.parseNumber(row[1]),
-                prevYearClose: this.parseNumber(row[2]),
-                prevMonthClose: this.parseNumber(row[3]),
-                currentMonth: this.parseNumber(row[4]),
-                achievement: this.parseNumber(row[5]),
-                growthYoY: this.parseNumber(row[6]),
-                growthMoM: this.parseNumber(row[7]),
+                target,
+                prevYearClose,
+                prevMonthClose,
+                currentMonth,
+                achievement,
+                growthYoY,
+                growthMoM,
                 
                 // Subscription
-                subTargetAmt: this.parseNumber(row[8]),
-                subTargetQty: this.parseNumber(row[9]),
-                subAmtPrev: this.parseNumber(row[10]),
-                subAmtCurrent: this.parseNumber(row[11]),
-                subOneTime: this.parseNumber(row[12]),
-                subAmtTotal: this.parseNumber(row[13]),
-                subAmtAchieve: this.parseNumber(row[14]),
-                subAmtMoM: this.parseNumber(row[15]),
-                subShare: this.parseNumber(row[16]),
-                subQtyPrev: this.parseNumber(row[17]),
-                subQtyCurrent: this.parseNumber(row[18]),
-                subQtyAchieve: this.parseNumber(row[19]),
-                subQtyMoM: this.parseNumber(row[20])
+                subTargetAmt,
+                subTargetQty,
+                subAmtPrev,
+                subAmtCurrent,
+                subOneTime,
+                subAmtTotal,
+                subAmtAchieve,
+                subAmtMoM,
+                subShare,
+                subQtyPrev,
+                subQtyCurrent,
+                subQtyAchieve,
+                subQtyMoM
             };
         }).filter(item => item !== null && item.group);
     }
@@ -349,6 +378,18 @@ class DataProcessor {
             targetGross: this.parseNumber(gross.targetGross || gross.target),
             growthRate: this.parseNumber(gross.growthRate)
         };
+    }
+
+    // Calculate achievement rate (달성률)
+    calculateAchievementRate(current, target) {
+        if (!target || target === 0) return 0;
+        return (current / target) * 100;
+    }
+
+    // Calculate growth rate (성장률: 전년 비, 전월 비)
+    calculateGrowthRate(current, previous) {
+        if (!previous || previous === 0) return 0;
+        return ((current - previous) / previous) * 100;
     }
 
     // Parse number (handle various formats, including Korean negative triangles)
