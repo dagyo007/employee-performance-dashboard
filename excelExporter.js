@@ -168,7 +168,17 @@ class ExcelExporter {
         XLSX.utils.book_append_sheet(workbook, ws, 'MASTER 관리');
         
         const fileName = `MASTER_관리_${this.getDateString()}.xlsx`;
-        XLSX.writeFile(workbook, fileName);
+        
+        // Browser-compatible download
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+        
         return fileName;
     }
 
@@ -190,7 +200,17 @@ class ExcelExporter {
         XLSX.utils.book_append_sheet(workbook, ws, '판매금액 실적');
         
         const fileName = `판매금액_실적_${this.getDateString()}.xlsx`;
-        XLSX.writeFile(workbook, fileName);
+        
+        // Browser-compatible download
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+        
         return fileName;
     }
 
@@ -213,7 +233,17 @@ class ExcelExporter {
         XLSX.utils.book_append_sheet(workbook, ws, '구독 실적');
         
         const fileName = `구독_실적_${this.getDateString()}.xlsx`;
-        XLSX.writeFile(workbook, fileName);
+        
+        // Browser-compatible download
+        const wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/octet-stream' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        link.click();
+        URL.revokeObjectURL(url);
+        
         return fileName;
     }
 

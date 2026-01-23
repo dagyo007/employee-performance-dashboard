@@ -97,7 +97,8 @@ class Dashboard {
                 <th>당월</th>
                 <th>달성률</th>
                 <th>전월비<br>(마감)</th>
-                <th rowspan="3" style="background: rgba(102, 126, 234, 0.1); font-weight: 700;">💬 AI 피드백</th>
+                <!-- AI 피드백 컬럼 (나중에 추가 예정) -->
+                <!-- <th rowspan="3" style="background: rgba(102, 126, 234, 0.1); font-weight: 700;">💬 AI 피드백</th> -->
             </tr>
         `;
     }
@@ -147,11 +148,14 @@ class Dashboard {
                 <td class="text-center font-bold">${item.subQtyAchieve.toFixed(1)}%</td>
                 <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subQtyMoM.toFixed(1)}%</td>
                 
-                <!-- AI Feedback (Col 22) -->
-                <td class="ai-feedback" style="font-size: 0.85rem; max-width: 250px; padding: 0.75rem;">${this.generateAIFeedback(item)}</td>
+                <!-- AI Feedback (Col 22) - 나중에 추가 예정 -->
+                <!-- <td class="ai-feedback" style="font-size: 0.85rem; max-width: 250px; padding: 0.75rem;">${this.generateAIFeedback(item)}</td> -->
             `;
             tbody.appendChild(row);
         });
+
+        // Render analytics for master data
+        this.renderMasterAnalytics(data);
     }
 
     // Render Sales Table (Updated to distinguish All vs Branch)
@@ -242,6 +246,9 @@ class Dashboard {
                 </tbody>
             `;
         }
+
+        // Render analytics for sales data
+        this.renderSalesAnalytics(data, subType);
     }
 
     // Render Subscription Table
@@ -369,6 +376,9 @@ class Dashboard {
                 `).join('')}
             </tbody>
         `;
+
+        // Render analytics for subscription data
+        this.renderSubscriptionAnalytics(data, subType);
     }
 
     // Helper: Format currency
@@ -1099,6 +1109,210 @@ class Dashboard {
         }
         
         return feedbacks.join(' | ');
+    }
+
+    // ================================
+    // Individual Analytics Methods
+    // ================================
+
+    // Render Master Analytics
+    renderMasterAnalytics(data) {
+        if (!data || data.length === 0) {
+            this.clearAnalytics('master');
+            return;
+        }
+
+        // Calculate statistics
+        const totalCount = data.length;
+        const avgAchievement = data.reduce((sum, item) => sum + (item.achievement || 0), 0) / totalCount;
+        const avgGrowth = data.reduce((sum, item) => sum + (item.growthYoY || 0), 0) / totalCount;
+        const excellentCount = data.filter(item => (item.achievement || 0) >= 100).length;
+
+        // Update stat cards
+        document.getElementById('master-total-count').textContent = totalCount;
+        document.getElementById('master-avg-achievement').textContent = avgAchievement.toFixed(1) + '%';
+        document.getElementById('master-avg-growth').textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById('master-excellent-count').textContent = excellentCount;
+
+        // Render charts
+        this.renderAchievementChart(data, 'master-achievement-chart');
+        this.renderTopRankings(data, 'master-top-table', 5);
+    }
+
+    // Render Sales Analytics
+    renderSalesAnalytics(data, subType) {
+        const prefix = subType === 'all' ? 'sales-all' : 'sales-branch';
+        
+        if (!data || data.length === 0) {
+            this.clearAnalytics(prefix);
+            return;
+        }
+
+        // Calculate statistics
+        const totalCount = data.length;
+        const avgAchievement = data.reduce((sum, item) => sum + (item.achievement || 0), 0) / totalCount;
+        const avgGrowth = data.reduce((sum, item) => sum + (item.growthYoY || 0), 0) / totalCount;
+        const excellentCount = data.filter(item => (item.achievement || 0) >= 100).length;
+
+        // Update stat cards
+        document.getElementById(`${prefix}-total-count`).textContent = totalCount;
+        document.getElementById(`${prefix}-avg-achievement`).textContent = avgAchievement.toFixed(1) + '%';
+        document.getElementById(`${prefix}-avg-growth`).textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById(`${prefix}-excellent-count`).textContent = excellentCount;
+
+        // Render charts
+        this.renderAchievementChart(data, `${prefix}-achievement-chart`);
+        this.renderTopRankings(data, `${prefix}-top-table`, 5);
+    }
+
+    // Render Subscription Analytics (unified for both tabs)
+    renderSubscriptionAnalytics(data, subType) {
+        // Use unified prefix for subscription analytics (shared by both tabs)
+        const prefix = 'subscription';
+        
+        if (!data || data.length === 0) {
+            this.clearAnalytics(prefix);
+            return;
+        }
+
+        // Calculate statistics (using achAmount for subscription)
+        const totalCount = data.length;
+        const avgAchievement = data.reduce((sum, item) => sum + (item.achAmount || 0), 0) / totalCount;
+        const avgGrowth = data.reduce((sum, item) => sum + (item.growthAmount || 0), 0) / totalCount;
+        const excellentCount = data.filter(item => (item.achAmount || 0) >= 100).length;
+
+        // Update stat cards
+        document.getElementById(`${prefix}-total-count`).textContent = totalCount;
+        document.getElementById(`${prefix}-avg-achievement`).textContent = avgAchievement.toFixed(1) + '%';
+        document.getElementById(`${prefix}-avg-growth`).textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById(`${prefix}-excellent-count`).textContent = excellentCount;
+
+        // Render charts (use achAmount as achievement metric)
+        this.renderAchievementChart(data, `${prefix}-achievement-chart`, 'achAmount');
+        this.renderTopRankings(data, `${prefix}-top-table`, 5, 'achAmount');
+    }
+
+    // Render Achievement Distribution Chart
+    renderAchievementChart(data, canvasId, achievementField = 'achievement') {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+
+        const ranges = {
+            '150%+': 0,
+            '120-150%': 0,
+            '100-120%': 0,
+            '80-100%': 0,
+            '<80%': 0
+        };
+
+        data.forEach(item => {
+            const ach = item[achievementField] || 0;
+            if (ach >= 150) ranges['150%+']++;
+            else if (ach >= 120) ranges['120-150%']++;
+            else if (ach >= 100) ranges['100-120%']++;
+            else if (ach >= 80) ranges['80-100%']++;
+            else ranges['<80%']++;
+        });
+
+        // Destroy existing chart if exists
+        const chartKey = `chart_${canvasId}`;
+        if (this.charts[chartKey]) {
+            this.charts[chartKey].destroy();
+        }
+
+        this.charts[chartKey] = new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(ranges),
+                datasets: [{
+                    data: Object.values(ranges),
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(220, 38, 38, 0.8)'
+                    ],
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#ffffff',
+                            font: { size: 11, family: 'Inter' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Render Top Rankings Table
+    renderTopRankings(data, tableId, limit = 5, achievementField = 'achievement') {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        if (!tbody) return;
+
+        // Sort by achievement and get top N
+        const topItems = [...data]
+            .sort((a, b) => (b[achievementField] || 0) - (a[achievementField] || 0))
+            .slice(0, limit);
+
+        tbody.innerHTML = '';
+        topItems.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            const name = item.name || item.group || '-';
+            const achievement = (item[achievementField] || 0).toFixed(1);
+            
+            tr.innerHTML = `
+                <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
+                <td><strong>${name}</strong></td>
+                <td style="text-align: center; font-weight: 600; color: ${achievement >= 100 ? '#10b981' : '#f59e0b'};">${achievement}%</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Clear analytics section
+    clearAnalytics(prefix) {
+        const ids = [
+            `${prefix}-total-count`,
+            `${prefix}-avg-achievement`,
+            `${prefix}-avg-growth`,
+            `${prefix}-excellent-count`
+        ];
+
+        ids.forEach(id => {
+            const elem = document.getElementById(id);
+            if (elem) {
+                if (id.includes('count')) elem.textContent = '0';
+                else elem.textContent = '0%';
+            }
+        });
+
+        // Clear chart and table
+        const chartCanvas = document.getElementById(`${prefix}-achievement-chart`);
+        if (chartCanvas) {
+            const chartKey = `chart_${prefix}-achievement-chart`;
+            if (this.charts[chartKey]) {
+                this.charts[chartKey].destroy();
+                delete this.charts[chartKey];
+            }
+        }
+
+        const table = document.getElementById(`${prefix}-top-table`);
+        if (table) {
+            const tbody = table.querySelector('tbody');
+            if (tbody) tbody.innerHTML = '';
+        }
     }
 }
 

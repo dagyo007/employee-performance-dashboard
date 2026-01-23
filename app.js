@@ -8,6 +8,7 @@ class App {
         this.competitionAnalyzer = new CompetitionAnalyzer();
         this.dashboard = new Dashboard(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer);
         this.excelExporter = new ExcelExporter(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer);
+        this.dashboardHelper = new DashboardHelper();
         
         this.currentSection = 'upload';
         this.init();
@@ -284,6 +285,29 @@ class App {
                 try { this.dashboard.renderSection('master'); } catch (e) { console.error("Render Master error:", e); }
                 try { this.dashboard.renderSection('sales'); } catch (e) { console.error("Render Sales error:", e); }
                 try { this.dashboard.renderSection('subscription'); } catch (e) { console.error("Render Subscription error:", e); }
+                
+                // Initialize checkboxes after rendering
+                console.log("Adding checkboxes to tables...");
+                setTimeout(() => {
+                    if (window.addCheckboxesToTables) {
+                        window.addCheckboxesToTables();
+                        
+                        // Store data and setup handlers
+                        if (this.dashboardHelper) {
+                            this.dashboardHelper.storeTableData('master-table', this.dataProcessor.performanceData.master);
+                            this.dashboardHelper.storeTableData('sales-all-table', this.dataProcessor.performanceData.sales);
+                            this.dashboardHelper.storeTableData('sales-branch-table', this.dataProcessor.performanceData.salesBranch);
+                            this.dashboardHelper.storeTableData('subscription-all-table', this.dataProcessor.performanceData.subscription);
+                            this.dashboardHelper.storeTableData('subscription-branch-table', this.dataProcessor.performanceData.subscriptionBranch);
+                            
+                            this.dashboardHelper.setupCheckboxHandlers('master-table');
+                            this.dashboardHelper.setupCheckboxHandlers('sales-all-table');
+                            this.dashboardHelper.setupCheckboxHandlers('sales-branch-table');
+                            this.dashboardHelper.setupCheckboxHandlers('subscription-all-table');
+                            this.dashboardHelper.setupCheckboxHandlers('subscription-branch-table');
+                        }
+                    }
+                }, 200);
             }
 
             // Switch to Master tab by default
@@ -329,6 +353,7 @@ class App {
 
     // Setup action buttons for new categories
     setupActionButtons() {
+        // MASTER - Full Export
         const exportMasterBtn = document.getElementById('export-master-btn');
         if (exportMasterBtn) {
             exportMasterBtn.addEventListener('click', () => {
@@ -336,6 +361,115 @@ class App {
                 if (!data) return this.showToast('데이터가 없습니다.', 'error');
                 this.excelExporter.exportMasterReport(data);
                 this.showToast('Excel 내보내기 완료', 'success');
+            });
+        }
+
+        // MASTER - Selective Export
+        const exportMasterSelectedBtn = document.getElementById('export-master-selected-btn');
+        if (exportMasterSelectedBtn) {
+            exportMasterSelectedBtn.addEventListener('click', () => {
+                const selectedData = this.dashboardHelper.getSelectedRows('master-table');
+                if (selectedData.length === 0) {
+                    return this.showToast('선택된 항목이 없습니다.', 'warning');
+                }
+                this.excelExporter.exportMasterReport(selectedData);
+                this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
+            });
+        }
+
+        // SALES ALL - Full Export
+        const exportSalesAllBtn = document.getElementById('export-sales-all-btn');
+        if (exportSalesAllBtn) {
+            exportSalesAllBtn.addEventListener('click', () => {
+                const data = this.dataProcessor.performanceData?.sales;
+                if (!data) return this.showToast('데이터가 없습니다.', 'error');
+                this.excelExporter.exportSalesReport(data);
+                this.showToast('Excel 내보내기 완료', 'success');
+            });
+        }
+
+        // SALES ALL - Selective Export  
+        const exportSalesAllSelectedBtn = document.getElementById('export-sales-all-selected-btn');
+        if (exportSalesAllSelectedBtn) {
+            exportSalesAllSelectedBtn.addEventListener('click', () => {
+                const selectedData = this.dashboardHelper.getSelectedRows('sales-all-table');
+                if (selectedData.length === 0) {
+                    return this.showToast('선택된 항목이 없습니다.', 'warning');
+                }
+                this.excelExporter.exportSalesReport(selectedData);
+                this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
+            });
+        }
+
+        // SALES BRANCH - Full Export
+        const exportSalesBranchBtn = document.getElementById('export-sales-branch-btn');
+        if (exportSalesBranchBtn) {
+            exportSalesBranchBtn.addEventListener('click', () => {
+                const data = this.dataProcessor.performanceData?.salesBranch;
+                if (!data) return this.showToast('데이터가 없습니다.', 'error');
+                this.excelExporter.exportSalesReport(data);
+                this.showToast('Excel 내보내기 완료', 'success');
+            });
+        }
+
+        // SALES BRANCH - Selective Export
+        const exportSalesBranchSelectedBtn = document.getElementById('export-sales-branch-selected-btn');
+        if (exportSalesBranchSelectedBtn) {
+            exportSalesBranchSelectedBtn.addEventListener('click', () => {
+                const selectedData = this.dashboardHelper.getSelectedRows('sales-branch-table');
+                if (selectedData.length === 0) {
+                    return this.showToast('선택된 항목이 없습니다.', 'warning');
+                }
+                this.excelExporter.exportSalesReport(selectedData);
+                this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
+            });
+        }
+
+        // SUBSCRIPTION ALL - Full Export
+        const exportSubscriptionAllBtn = document.getElementById('export-subscription-all-btn');
+        if (exportSubscriptionAllBtn) {
+            exportSubscriptionAllBtn.addEventListener('click', () => {
+                const data = this.dataProcessor.performanceData?.subscription;
+                if (!data) return this.showToast('데이터가 없습니다.', 'error');
+                this.excelExporter.exportSubscriptionReport(data);
+                this.showToast('Excel 내보내기 완료', 'success');
+            });
+        }
+
+        // SUBSCRIPTION ALL - Selective Export
+        const exportSubscriptionAllSelectedBtn = document.getElementById('export-subscription-all-selected-btn');
+        if (exportSubscriptionAllSelectedBtn) {
+            exportSubscriptionAllSelectedBtn.addEventListener('click', () => {
+                const selectedData = this.dashboardHelper.getSelectedRows('subscription-all-table');
+                if (selectedData.length === 0) {
+                    return this.showToast('선택된 항목이 없습니다.', 'warning');
+                }
+                this.excelExporter.exportSubscriptionReport(selectedData);
+                this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
+            });
+        }
+
+        // SUBSCRIPTION BRANCH - Full Export
+        const exportSubscriptionBranchBtn = document.getElementById('export-subscription-branch-btn');
+        if (exportSubscriptionBranchBtn) {
+            exportSubscriptionBranchBtn.addEventListener('click', () => {
+                const data = this.dataProcessor.performanceData?.subscriptionBranch;
+                if (!data) return this.showToast('데이터가 없습니다.', 'error');
+                this.excelExporter.exportSubscriptionReport(data);
+                this.showToast('Excel 내보내기 완료', 'success');
+            });
+        }
+
+        // SUBSCRIPTION BRANCH - Selective Export
+        const exportSubscriptionBranchSelectedBtn = document.getElementById('export-subscription-branch-selected-btn');
+        if (exportSubscriptionBranchSelectedBtn) {
+            exportSubscriptionBranchSelectedBtn.addEventListener('click', () => {
+                const selectedData = this.dashboardHelper.getSelectedRows('subscription-branch-table');
+                if (selectedData.length === 0) {
+                    return this.showToast('선택된 항목이 없습니다.', 'warning');
+                }
+                this.excelExporter.exportSubscriptionReport(selectedData);
+                this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
             });
         }
     }
