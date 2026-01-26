@@ -315,8 +315,8 @@ class DataProcessor {
                 // Special row - will be calculated in second pass
                 achievement = null;
             } else {
-                // Regular row - auto-calculate
-                achievement = this.calculateAchievementRate(currentMonth, target);
+                // Regular row - defer calculation to second pass (for baseline subtraction)
+                achievement = null;
             }
                 
             const growthYoY = (row[6] !== undefined && row[6] !== null && row[6] !== '') 
@@ -340,7 +340,12 @@ class DataProcessor {
             };
         }).filter(item => item !== null);
 
-        // Second pass: Calculate achievement for 양판n담당 rows
+        // Second pass: Calculate achievement with special logic
+        // 1. Find baseline (하이마트) value
+        const baselineItem = data.find(item => item.name === '하이마트');
+        const baselineValue = baselineItem ? baselineItem.currentMonth : 0;
+        
+        // 2. Calculate achievement for 양판n담당 rows (subtract subordinates)
         for (let i = 0; i < data.length; i++) {
             const item = data[i];
             
@@ -348,17 +353,52 @@ class DataProcessor {
                 continue;
             }
             
-            // Find subordinates: following rows with target = 0
+            // Find subordinates: ALL rows with target = 0 until next 양판n담당
+            // This includes rows even after target>0 rows (which are independent branches)
             let subordinatesSum = 0;
             let j = i + 1;
             
-            while (j < data.length && data[j].target === 0) {
-                subordinatesSum += data[j].currentMonth;
+            while (j < data.length) {
+                // Stop if we hit another 양판n담당
+                if (data[j].isSpecialRow) {
+                    break;
+                }
+                
+                // Include this row if target = 0 (subordinate)
+                // Skip if target > 0 (independent branch like 서승호)
+                if (data[j].target === 0) {
+                    subordinatesSum += data[j].currentMonth;
+                }
+                
                 j++;
             }
             
             // Calculate: ((current - subordinatesSum) / target) * 100
             const netCurrent = item.currentMonth - subordinatesSum;
+            item.achievement = this.calculateAchievementRate(netCurrent, item.target);
+        }
+        
+        // 3. Apply baseline subtraction to all regular rows (except 하이마트 and 양판n담당)
+        for (const item of data) {
+            // Skip if already calculated (양판n담당 or Excel value)
+            if (item.achievement !== null) {
+                continue;
+            }
+            
+            // Set 하이마트 to 0%
+            if (item.name === '하이마트') {
+                item.achievement = 0;
+                continue;
+            }
+            
+            // Subordinates (target=0) get 0% achievement
+            if (item.target === 0) {
+                item.achievement = 0;
+                continue;
+            }
+            
+            // Apply baseline subtraction: ((current - baseline) / target) * 100
+            const netCurrent = item.currentMonth - baselineValue;
             item.achievement = this.calculateAchievementRate(netCurrent, item.target);
         }
         
