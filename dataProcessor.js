@@ -297,13 +297,27 @@ class DataProcessor {
             const prevMonthClose = this.parseNumber(row[3]);
             const currentMonth = this.parseNumber(row[4]);
             
+            // Check if this is a special row (양판n담당) that uses complex Excel formulas
+            // These rows use: ((current - SUM(subordinates)) / target) * 100
+            // We will auto-calculate this in a second pass
+            const isSpecialRow = /양판\d+담당/.test(name);
+            
             // Auto-calculate if columns 5-7 are missing or empty
             // This supports both:
             // 1. Full format (8 columns): 구분, 목표, 전년마감, 전월마감, 당월, 달성률, 전년比, 전월比
             // 2. Minimal format (5 columns): 구분, 목표, 전년마감, 전월마감, 당월 (auto-calculate rest)
-            const achievement = (row[5] !== undefined && row[5] !== null && row[5] !== '') 
-                ? this.parseNumber(row[5]) 
-                : this.calculateAchievementRate(currentMonth, target);
+            // 3. Special rows (양판n담당): MUST include Excel-calculated values
+            let achievement;
+            if (row[5] !== undefined && row[5] !== null && row[5] !== '') {
+                // Excel value provided - use it
+                achievement = this.parseNumber(row[5]);
+            } else if (isSpecialRow) {
+                // Special row - will be calculated in second pass
+                achievement = null;
+            } else {
+                // Regular row - auto-calculate
+                achievement = this.calculateAchievementRate(currentMonth, target);
+            }
                 
             const growthYoY = (row[6] !== undefined && row[6] !== null && row[6] !== '') 
                 ? this.parseNumber(row[6]) 
@@ -321,9 +335,35 @@ class DataProcessor {
                 currentMonth,
                 achievement,
                 growthYoY,
-                growthMoM
+                growthMoM,
+                isSpecialRow
             };
         }).filter(item => item !== null);
+
+        // Second pass: Calculate achievement for 양판n담당 rows
+        for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            
+            if (!item.isSpecialRow || item.achievement !== null) {
+                continue;
+            }
+            
+            // Find subordinates: following rows with target = 0
+            let subordinatesSum = 0;
+            let j = i + 1;
+            
+            while (j < data.length && data[j].target === 0) {
+                subordinatesSum += data[j].currentMonth;
+                j++;
+            }
+            
+            // Calculate: ((current - subordinatesSum) / target) * 100
+            const netCurrent = item.currentMonth - subordinatesSum;
+            item.achievement = this.calculateAchievementRate(netCurrent, item.target);
+        }
+        
+        // Remove isSpecialRow marker
+        data.forEach(item => delete item.isSpecialRow);
 
         return { data, isBranch: false };
     }
