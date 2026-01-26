@@ -44,8 +44,14 @@
                         <h3>📝 RAW 데이터 입력</h3>
                     </div>
                     <div class="card-content">
-                        <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">엑셀에서 복사한 MASTER 데이터를 아래에 붙여넣으세요 (21개 컬럼)</p>
-                        <textarea id="master-raw-input" class="raw-data-input" rows="8" placeholder="구분	목표	전년마감	전월마감	당월	...(엑셀에서 복사하여 붙여넣기)"></textarea>
+                        <p style="color: var(--color-text-secondary); margin-bottom: 1rem;">엑셀에서 복사하여 붙여넣거나, 파일을 선택하거나, 아래 영역에 드래그하세요 (21개 컬럼)</p>
+                        <div style="margin-bottom: 1rem;">
+                            <input type="file" id="master-raw-file" accept=".xlsx,.xls" hidden>
+                            <button class="btn btn-secondary" onclick="document.getElementById('master-raw-file').click()">
+                                📁 엑셀 파일 선택
+                            </button>
+                        </div>
+                        <textarea id="master-raw-input" class="raw-data-input drag-drop-area" rows="8" placeholder="구분	목표	전년마감	전월마감	당월	...(엑셀에서 복사하여 붙여넣거나 파일을 드래그하세요)" data-type="master"></textarea>
                         <button class="btn btn-primary btn-large" id="load-master-raw-btn" style="margin-top: 1rem;">
                             <span>⚡ 데이터 로드</span>
                         </button>
@@ -160,7 +166,13 @@
                             <h3>📝 RAW 데이터 입력 (종합)</h3>
                         </div>
                         <div class="card-content">
-                            <textarea id="sales-all-raw-input" class="raw-data-input" rows="6" placeholder="구분	목표	전년마감	전월마감	당월	달성률	전년比	전월比"></textarea>
+                            <div style="margin-bottom: 1rem;">
+                                <input type="file" id="sales-all-raw-file" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-secondary" onclick="document.getElementById('sales-all-raw-file').click()">
+                                    📁 엑셀 파일 선택
+                                </button>
+                            </div>
+                            <textarea id="sales-all-raw-input" class="raw-data-input drag-drop-area" rows="6" placeholder="구분	목표	전년마감	전월마감	당월	달성률	전년比	전월比 (파일을 드래그하거나 붙여넣기)" data-type="sales"></textarea>
                             <button class="btn btn-primary" id="load-sales-all-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
                         </div>
                     </div>
@@ -257,7 +269,13 @@
                             <h3>📝 RAW 데이터 입력 (지점별)</h3>
                         </div>
                         <div class="card-content">
-                            <textarea id="sales-branch-raw-input" class="raw-data-input" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표	..."></textarea>
+                            <div style="margin-bottom: 1rem;">
+                                <input type="file" id="sales-branch-raw-file" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-secondary" onclick="document.getElementById('sales-branch-raw-file').click()">
+                                    📁 엑셀 파일 선택
+                                </button>
+                            </div>
+                            <textarea id="sales-branch-raw-input" class="raw-data-input drag-drop-area" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표	... (파일을 드래그하거나 붙여넣기)" data-type="sales"></textarea>
                             <button class="btn btn-primary" id="load-sales-branch-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
                         </div>
                     </div>
@@ -365,7 +383,13 @@
                             <h3>📝 RAW 데이터 입력 (종합)</h3>
                         </div>
                         <div class="card-content">
-                            <textarea id="subscription-all-raw-input" class="raw-data-input" rows="6" placeholder="구분	목표(금액)	목표(수량)	전월마감	당월	..."></textarea>
+                            <div style="margin-bottom: 1rem;">
+                                <input type="file" id="subscription-all-raw-file" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-secondary" onclick="document.getElementById('subscription-all-raw-file').click()">
+                                    📁 엑셀 파일 선택
+                                </button>
+                            </div>
+                            <textarea id="subscription-all-raw-input" class="raw-data-input drag-drop-area" rows="6" placeholder="구분	목표(금액)	목표(수량)	전월마감	당월	... (파일을 드래그하거나 붙여넣기)" data-type="subscription"></textarea>
                             <button class="btn btn-primary" id="load-subscription-all-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
                         </div>
                     </div>
@@ -391,7 +415,13 @@
                             <h3>📝 RAW 데이터 입력 (지점별)</h3>
                         </div>
                         <div class="card-content">
-                            <textarea id="subscription-branch-raw-input" class="raw-data-input" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표(금액)	..."></textarea>
+                            <div style="margin-bottom: 1rem;">
+                                <input type="file" id="subscription-branch-raw-file" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-secondary" onclick="document.getElementById('subscription-branch-raw-file').click()">
+                                    📁 엑셀 파일 선택
+                                </button>
+                            </div>
+                            <textarea id="subscription-branch-raw-input" class="raw-data-input drag-drop-area" rows="6" placeholder="담당	팀	채널	지점명	관리자	목표(금액)	... (파일을 드래그하거나 붙여넣기)" data-type="subscription"></textarea>
                             <button class="btn btn-primary" id="load-subscription-branch-raw-btn" style="margin-top: 1rem;">⚡ 데이터 로드</button>
                         </div>
                     </div>

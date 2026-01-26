@@ -158,6 +158,141 @@ class App {
             const rawText = document.getElementById('subscription-branch-raw-input').value;
             this.loadRawData(rawText, 'subscription');
         });
+
+        // Setup file input handlers for RAW data areas
+        this.setupFileInputHandlers();
+        
+        // Setup drag and drop handlers for all textareas
+        this.setupDragAndDrop();
+    }
+
+    // Setup file input handlers for RAW data textareas
+    setupFileInputHandlers() {
+        const fileInputMappings = [
+            { fileId: 'master-raw-file', textareaId: 'master-raw-input' },
+            { fileId: 'sales-all-raw-file', textareaId: 'sales-all-raw-input' },
+            { fileId: 'sales-branch-raw-file', textareaId: 'sales-branch-raw-input' },
+            { fileId: 'subscription-all-raw-file', textareaId: 'subscription-all-raw-input' },
+            { fileId: 'subscription-branch-raw-file', textareaId: 'subscription-branch-raw-input' }
+        ];
+
+        fileInputMappings.forEach(({ fileId, textareaId }) => {
+            const fileInput = document.getElementById(fileId);
+            const textarea = document.getElementById(textareaId);
+            
+            if (fileInput && textarea) {
+                fileInput.addEventListener('change', async (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        await this.handleExcelFile(file, textarea);
+                    }
+                });
+            }
+        });
+    }
+
+    // Setup drag and drop for all RAW data textareas
+    setupDragAndDrop() {
+        const textareas = document.querySelectorAll('.drag-drop-area');
+        
+        textareas.forEach(textarea => {
+            // Prevent default drag behaviors
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                textarea.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+
+            // Highlight on drag over
+            ['dragenter', 'dragover'].forEach(eventName => {
+                textarea.addEventListener(eventName, () => {
+                    textarea.classList.add('drag-over');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                textarea.addEventListener(eventName, () => {
+                    textarea.classList.remove('drag-over');
+                });
+            });
+
+            // Handle dropped files
+            textarea.addEventListener('drop', async (e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    // Check if it's an Excel file
+                    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        await this.handleExcelFile(file, textarea);
+                    } else {
+                        this.showToast('엑셀 파일(.xlsx, .xls)만 지원됩니다.', 'error');
+                    }
+                }
+            });
+        });
+    }
+
+    // Handle Excel file and convert to TSV for textarea
+    async handleExcelFile(file, textarea) {
+        try {
+            this.showLoading(true);
+            
+            const data = await this.readExcelFile(file);
+            
+            if (!data || data.length === 0) {
+                this.showToast('파일에서 데이터를 읽을 수 없습니다.', 'error');
+                return;
+            }
+
+            // Convert array data to TSV (tab-separated values)
+            const tsvContent = data.map(row => row.join('\t')).join('\n');
+            
+            // Set the content to textarea
+            textarea.value = tsvContent;
+            
+            this.showToast(`${file.name} 파일을 성공적으로 불러왔습니다!`, 'success');
+        } catch (error) {
+            console.error('Excel file processing error:', error);
+            this.showToast('파일 처리 중 오류가 발생했습니다: ' + error.message, 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    // Read Excel file and return array of rows
+    async readExcelFile(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first sheet
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to array of arrays
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                        header: 1,
+                        raw: false,
+                        defval: ''
+                    });
+                    
+                    resolve(jsonData);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+            
+            reader.onerror = () => {
+                reject(new Error('파일을 읽을 수 없습니다.'));
+            };
+            
+            reader.readAsArrayBuffer(file);
+        });
     }
 
     // Load RAW data from textarea

@@ -1013,6 +1013,19 @@ body {
     font-style: italic;
 }
 
+/* Drag and Drop States */
+.drag-drop-area.drag-over {
+    border-color: var(--color-success);
+    background: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.drag-drop-area.drag-active {
+    border-color: var(--color-primary);
+    background: rgba(102, 126, 234, 0.1);
+    cursor: copy;
+}
+
 .info-box {
     background: rgba(59, 130, 246, 0.1);
     border: 1px solid rgba(59, 130, 246, 0.3);
