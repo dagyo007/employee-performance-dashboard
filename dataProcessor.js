@@ -203,27 +203,58 @@ class DataProcessor {
     processSalesData(rows) {
         if (!Array.isArray(rows)) return { data: [], isBranch: false };
 
-        // Detect if it's Branch data (contains '담당')
-        const branchHeaderIdx = rows.findIndex(row => Array.isArray(row) && row.some(cell => String(cell).includes('담당')));
+        // Detect if it's Branch data (contains '담당' in HEADERS ONLY, not data)
+        // Only check first 5 rows to avoid false positives from data containing '담당'
+        const branchHeaderIdx = rows.slice(0, 5).findIndex(row => Array.isArray(row) && row.some(cell => String(cell).includes('담당')));
         
         if (branchHeaderIdx !== -1) {
             // Branch structure detected: [담당, 팀, 채널, 지점명, 관리자, 목표, 판매금액(4), 신장률(2)]
             const dataRows = rows.slice(branchHeaderIdx + 3); // Usually 3 header rows
             const data = dataRows.map(row => {
                 if (!row || row.length < 4 || !row[3]) return null;
+                
+                // Exclude filter/summary rows explicitly
+                const name = String(row[3]).trim();
+                const excludeKeywords = ['필터', '합계', '소계', '총계', 'total', 'sum', 'subtotal', 'filter'];
+                if (excludeKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) {
+                    return null;
+                }
+                
+                // Parse RAW data (always present)
+                const target = this.parseNumber(row[5]);
+                const prevYearClose = this.parseNumber(row[6]);
+                const prevMonthClose = this.parseNumber(row[7]);
+                const currentMonth = this.parseNumber(row[8]);
+                
+                // Auto-calculate if columns 9-11 are missing or empty
+                // Supports both:
+                // 1. Full format (12 columns): 담당~당월(9) + 달성률, 전년比, 전월比(3)
+                // 2. Minimal format (9 columns): 담당~당월만 (auto-calculate rest)
+                const achievement = (row[9] !== undefined && row[9] !== null && row[9] !== '') 
+                    ? this.parseNumber(row[9]) 
+                    : this.calculateAchievementRate(currentMonth, target);
+                    
+                const growthYoY = (row[10] !== undefined && row[10] !== null && row[10] !== '') 
+                    ? this.parseNumber(row[10]) 
+                    : this.calculateGrowthRate(currentMonth, prevYearClose);
+                    
+                const growthMoM = (row[11] !== undefined && row[11] !== null && row[11] !== '') 
+                    ? this.parseNumber(row[11]) 
+                    : this.calculateGrowthRate(currentMonth, prevMonthClose);
+                
                 return {
                     manager1: row[0],
                     team: row[1],
                     channel: row[2],
                     name: row[3],
                     manager2: row[4],
-                    target: this.parseNumber(row[5]),
-                    prevYearClose: this.parseNumber(row[6]),
-                    prevMonthClose: this.parseNumber(row[7]),
-                    currentMonth: this.parseNumber(row[8]),
-                    achievement: this.parseNumber(row[9]),
-                    growthYoY: this.parseNumber(row[10]),
-                    growthMoM: this.parseNumber(row[11])
+                    target,
+                    prevYearClose,
+                    prevMonthClose,
+                    currentMonth,
+                    achievement,
+                    growthYoY,
+                    growthMoM
                 };
             }).filter(item => item !== null);
             return { data, isBranch: true };
@@ -235,18 +266,62 @@ class DataProcessor {
             return { data: Array.isArray(rows) ? rows : [], isBranch: false };
         }
 
-        const dataRows = rows.slice(summaryHeaderIdx + 2);
+        // Determine data start index - handle multi-line headers (2 or 3 rows)
+        // Check if there are sub-headers after the main header
+        let dataStartIdx = summaryHeaderIdx + 2; // Default: skip 2 rows (header + sub-header)
+        
+        // Check if row after main header contains sub-headers like '전년 마감', '전월 마감', etc.
+        if (rows[summaryHeaderIdx + 1] && rows[summaryHeaderIdx + 1].some(cell => 
+            String(cell).includes('마감') || String(cell).includes('달성') || String(cell).includes('신장'))) {
+            // Check if there's a third header row (e.g., '전년 마감比', '전월마감比')
+            if (rows[summaryHeaderIdx + 2] && rows[summaryHeaderIdx + 2].some(cell => 
+                String(cell).includes('比') || String(cell).includes('%'))) {
+                dataStartIdx = summaryHeaderIdx + 3; // Skip 3 rows for 3-line headers
+            }
+        }
+
+        const dataRows = rows.slice(dataStartIdx);
         const data = dataRows.map(row => {
             if (!row || row.length === 0 || !row[0]) return null;
+            
+            // Exclude filter/summary rows explicitly
+            const name = String(row[0]).trim();
+            const excludeKeywords = ['필터', '합계', '소계', '총계', 'total', 'sum', 'subtotal', 'filter'];
+            if (excludeKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) {
+                return null;
+            }
+            
+            // Parse RAW data (always present)
+            const target = this.parseNumber(row[1]);
+            const prevYearClose = this.parseNumber(row[2]);
+            const prevMonthClose = this.parseNumber(row[3]);
+            const currentMonth = this.parseNumber(row[4]);
+            
+            // Auto-calculate if columns 5-7 are missing or empty
+            // This supports both:
+            // 1. Full format (8 columns): 구분, 목표, 전년마감, 전월마감, 당월, 달성률, 전년比, 전월比
+            // 2. Minimal format (5 columns): 구분, 목표, 전년마감, 전월마감, 당월 (auto-calculate rest)
+            const achievement = (row[5] !== undefined && row[5] !== null && row[5] !== '') 
+                ? this.parseNumber(row[5]) 
+                : this.calculateAchievementRate(currentMonth, target);
+                
+            const growthYoY = (row[6] !== undefined && row[6] !== null && row[6] !== '') 
+                ? this.parseNumber(row[6]) 
+                : this.calculateGrowthRate(currentMonth, prevYearClose);
+                
+            const growthMoM = (row[7] !== undefined && row[7] !== null && row[7] !== '') 
+                ? this.parseNumber(row[7]) 
+                : this.calculateGrowthRate(currentMonth, prevMonthClose);
+            
             return {
                 name: row[0],
-                target: this.parseNumber(row[1]),
-                prevYearClose: this.parseNumber(row[2]),
-                prevMonthClose: this.parseNumber(row[3]),
-                currentMonth: this.parseNumber(row[4]),
-                achievement: this.parseNumber(row[5]),
-                growthYoY: this.parseNumber(row[6]),
-                growthMoM: this.parseNumber(row[7])
+                target,
+                prevYearClose,
+                prevMonthClose,
+                currentMonth,
+                achievement,
+                growthYoY,
+                growthMoM
             };
         }).filter(item => item !== null);
 
@@ -583,6 +658,146 @@ class DataProcessor {
     // Format number for display
     formatNumber(num, decimals = 1) {
         return parseFloat(num).toFixed(decimals);
+    }
+
+    // ============= NEW AGGREGATION FUNCTIONS =============
+    
+    /**
+     * Aggregate sales data by team
+     * @param {Array} salesData - Branch-level sales data
+     * @returns {Array} Team-level aggregated data with calculated metrics
+     */
+    aggregateByTeam(salesData) {
+        if (!Array.isArray(salesData) || salesData.length === 0) return [];
+        
+        const teamMap = {};
+        
+        salesData.forEach(item => {
+            const teamKey = item.team || '미분류';
+            
+            if (!teamMap[teamKey]) {
+                teamMap[teamKey] = {
+                    team: teamKey,
+                    target: 0,
+                    prevYearClose: 0,
+                    prevMonthClose: 0,
+                    currentMonth: 0,
+                    count: 0
+                };
+            }
+            
+            teamMap[teamKey].target += item.target || 0;
+            teamMap[teamKey].prevYearClose += item.prevYearClose || 0;
+            teamMap[teamKey].prevMonthClose += item.prevMonthClose || 0;
+            teamMap[teamKey].currentMonth += item.currentMonth || 0;
+            teamMap[teamKey].count += 1;
+        });
+        
+        // Calculate derived metrics for each team
+        return Object.values(teamMap).map(team => ({
+            name: team.team,
+            target: team.target,
+            prevYearClose: team.prevYearClose,
+            prevMonthClose: team.prevMonthClose,
+            currentMonth: team.currentMonth,
+            achievement: this.calculateAchievementRate(team.currentMonth, team.target),
+            growthYoY: this.calculateGrowthRate(team.currentMonth, team.prevYearClose),
+            growthMoM: this.calculateGrowthRate(team.currentMonth, team.prevMonthClose),
+            storeCount: team.count
+        }));
+    }
+    
+    /**
+     * Aggregate sales data by channel
+     * @param {Array} salesData - Branch-level sales data
+     * @returns {Array} Channel-level aggregated data with calculated metrics
+     */
+    aggregateByChannel(salesData) {
+        if (!Array.isArray(salesData) || salesData.length === 0) return [];
+        
+        const channelMap = {};
+        
+        salesData.forEach(item => {
+            const channelKey = item.channel || '미분류';
+            
+            if (!channelMap[channelKey]) {
+                channelMap[channelKey] = {
+                    channel: channelKey,
+                    target: 0,
+                    prevYearClose: 0,
+                    prevMonthClose: 0,
+                    currentMonth: 0,
+                    count: 0
+                };
+            }
+            
+            channelMap[channelKey].target += item.target || 0;
+            channelMap[channelKey].prevYearClose += item.prevYearClose || 0;
+            channelMap[channelKey].prevMonthClose += item.prevMonthClose || 0;
+            channelMap[channelKey].currentMonth += item.currentMonth || 0;
+            channelMap[channelKey].count += 1;
+        });
+        
+        // Calculate derived metrics for each channel
+        return Object.values(channelMap).map(channel => ({
+            name: channel.channel,
+            target: channel.target,
+            prevYearClose: channel.prevYearClose,
+            prevMonthClose: channel.prevMonthClose,
+            currentMonth: channel.currentMonth,
+            achievement: this.calculateAchievementRate(channel.currentMonth, channel.target),
+            growthYoY: this.calculateGrowthRate(channel.currentMonth, channel.prevYearClose),
+            growthMoM: this.calculateGrowthRate(channel.currentMonth, channel.prevMonthClose),
+            storeCount: channel.count
+        }));
+    }
+    
+    /**
+     * Get grand total for sales data
+     * @param {Array} salesData - Any sales data
+     * @returns {Object} Total aggregated data
+     */
+    getGrandTotal(salesData) {
+        if (!Array.isArray(salesData) || salesData.length === 0) {
+            return {
+                name: '전체',
+                target: 0,
+                prevYearClose: 0,
+                prevMonthClose: 0,
+                currentMonth: 0,
+                achievement: 0,
+                growthYoY: 0,
+                growthMoM: 0,
+                count: 0
+            };
+        }
+        
+        const total = salesData.reduce((acc, item) => {
+            acc.target += item.target || 0;
+            acc.prevYearClose += item.prevYearClose || 0;
+            acc.prevMonthClose += item.prevMonthClose || 0;
+            acc.currentMonth += item.currentMonth || 0;
+            acc.count += 1;
+            return acc;
+        }, {
+            target: 0,
+            prevYearClose: 0,
+            prevMonthClose: 0,
+            currentMonth: 0,
+            count: 0
+        });
+        
+        return {
+            name: '전체',
+            target: total.target,
+            prevYearClose: total.prevYearClose,
+            prevMonthClose: total.prevMonthClose,
+            currentMonth: total.currentMonth,
+            achievement: this.calculateAchievementRate(total.currentMonth, total.target),
+            growthYoY: this.calculateGrowthRate(total.currentMonth, total.prevYearClose),
+            growthMoM: this.calculateGrowthRate(total.currentMonth, total.prevMonthClose),
+            count: total.count
+        };
     }
 }
 
