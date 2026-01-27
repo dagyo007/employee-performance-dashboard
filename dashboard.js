@@ -360,14 +360,8 @@ class Dashboard {
                         <td class="text-right">${item.targetQty || 0}</td>
                         <td class="text-right">${this.formatCurrency(item.prevMonthAmount || 0)}</td>
                         <td class="text-right">${this.formatCurrency(item.currentAmount || 0)}</td>
-                        ${item.name === '전자랜드' ? 
-                            `<td class="text-right">${this.formatCurrency(item.cashAmount || 0)}</td>` : 
-                            `<td class="text-center" style="color: #ccc;">#######</td>`
-                        }
-                        ${item.name === '전자랜드' || item.name === '양판1담당' || item.name === '서승호' ?
-                            `<td class="text-right" style="font-weight: bold; background: rgba(102, 126, 234, 0.1);">${this.formatCurrency(item.totalAmount || 0)}</td>` :
-                             `<td class="text-center" style="color: #ccc;">#######</td>`
-                        }
+                        <td class="text-right">${this.formatCurrency(item.cashAmount || 0)}</td>
+                        <td class="text-right" style="font-weight: bold; background: rgba(102, 126, 234, 0.1);">${this.formatCurrency(item.totalAmount || 0)}</td>
                         <td class="text-center">${this.formatPercentage(item.achAmount || 0)}</td>
                         <td class="text-center" style="color: ${item.growthAmount >= 0 ? '#10b981' : '#ef4444'}">
                             ${item.growthAmount >= 0 ? '' : '△'}${this.formatPercentage(Math.abs(item.growthAmount))}

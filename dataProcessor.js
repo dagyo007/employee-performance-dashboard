@@ -80,13 +80,26 @@ class DataProcessor {
         
         // Convert each line to array (split by tabs or multiple spaces)
         const rows = lines.map(line => {
+            let cells = [];
             // First try tab separation
             if (line.includes('\t')) {
-                return line.split('\t').map(cell => cell.trim());
+                cells = line.split('\t').map(cell => cell.trim());
             }
-            // Otherwise split by 2 or more spaces
-            return line.split(/\s{2,}/).map(cell => cell.trim());
+            
+            // If tabs didn't work effectively (1 column) or weren't present, try 2+ spaces
+            if (cells.length <= 1) {
+                cells = line.split(/\s{2,}/).map(cell => cell.trim());
+            }
+
+            // If still 1 column, fallback to single space (risky for names with spaces, but needed for simple copy-pastes)
+            if (cells.length <= 1) {
+                cells = line.split(/\s+/).map(cell => cell.trim());
+            }
+
+            return cells;
         });
+
+        console.log('Parsed Rows Debug:', rows.slice(0, 3)); // Debug log for user
 
         // Process based on type
         switch (type) {
@@ -208,26 +221,25 @@ class DataProcessor {
         const branchHeaderIdx = rows.slice(0, 5).findIndex(row => Array.isArray(row) && row.some(cell => String(cell).includes('담당')));
         
         if (branchHeaderIdx !== -1) {
-            // Branch structure detected: [담당, 팀, 채널, 지점명, 관리자, 목표, 판매금액(4), 신장률(2)]
+            // Branch structure detected: [담당, 팀, 채널, 지점명, 관리자, 목표, 전년마감, 전월마감, 당월(9 columns)]
             
             // Dynamic Header Skipping:
-            // Find the first row that looks like actual data (has a valid manager/team name and NOT a keyword like filter/total)
-            // We start searching after the detected header row.
+            // Find the first row that looks like actual data
             let dataStartIdx = branchHeaderIdx + 1;
+            
             for (let i = branchHeaderIdx + 1; i < rows.length; i++) {
                 const row = rows[i];
                 if (!row || row.length === 0) continue;
                 
                 const firstCell = String(row[0] || '').trim();
-                const fourthCell = String(row[3] || '').trim(); // 지점명
                 
-                // Skip if it contains filter/header keywords
+                // Skip Header/Filter rows
                 // 1. Exact match for Header titles
                 if (['담당', '팀', '채널', '지점명', '구분'].includes(firstCell)) continue;
                 
                 // 2. Partial match for Filters/Sums
                 const isFilterOrSum = ['필터', 'filter', '합계', '소계', '총계', 'total', 'sum'].some(
-                    k => firstCell.includes(k) || fourthCell.includes(k)
+                    k => firstCell.includes(k)
                 );
                 
                 if (isFilterOrSum) continue;
@@ -244,14 +256,11 @@ class DataProcessor {
             const data = dataRows.map(row => {
                 if (!row || row.length < 4 || !row[3]) return null;
                 
-                // Exclude filter/summary rows explicitly (double check)
-                const name = String(row[3]).trim();
-                const excludeKeywords = ['필터', '합계', '소계', '총계', 'total', 'sum', 'subtotal', 'filter'];
-                if (excludeKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) {
-                    return null;
-                }
-                
-                // Parse RAW data (always present)
+                const firstCell = String(row[0] || '').trim();
+                if (['필터', 'filter', '합계', '소계', '총계', 'total', 'sum'].some(k => firstCell.includes(k))) return null;
+                if (firstCell === '담당') return null;
+
+                // Parse RAW data (cols 0-8 are inputs)
                 const target = this.parseNumber(row[5]);
                 const prevYearClose = this.parseNumber(row[6]);
                 const prevMonthClose = this.parseNumber(row[7]);
@@ -261,9 +270,6 @@ class DataProcessor {
                 const isEmpty = (val) => val === undefined || val === null || String(val).trim() === '';
 
                 // Auto-calculate if columns 9-11 are missing or empty
-                // Supports both:
-                // 1. Full format (12 columns): 담당~당월(9) + 달성률, 전년比, 전월比(3)
-                // 2. Minimal format (9 columns): 담당~당월만 (auto-calculate rest)
                 const achievement = !isEmpty(row[9])
                     ? this.parseNumber(row[9]) 
                     : this.calculateAchievementRate(currentMonth, target);
@@ -431,9 +437,19 @@ class DataProcessor {
                 continue;
             }
             
-            // Apply baseline subtraction: ((current - baseline) / target) * 100
-            const netCurrent = item.currentMonth - baselineValue;
-            item.achievement = this.calculateAchievementRate(netCurrent, item.target);
+            // Check if this is an excluded category (uses complex/baseline logic like Net Sales)
+            // Individual staff (e.g. Seo Seung-ho) AND Electronic Land (전자랜드) should use Simple Calculation (Current/Target)
+            // Only Interbiz (인터비즈) and Yangpan Store (양판점) seem to use complex formulas based on the data
+            const isExcludedCategory = ['인터비즈', '양판점'].includes(item.name) || /양판\d+담당/.test(item.name);
+            
+            if (!isExcludedCategory) {
+                // Individual Staff & Electronic Land -> Simple Calculation: (Current / Target) * 100
+                item.achievement = this.calculateAchievementRate(item.currentMonth, item.target);
+            } else {
+                // Excluded Category -> Apply Baseline Subtraction (Net Calculation)
+                const netCurrent = item.currentMonth - baselineValue;
+                item.achievement = this.calculateAchievementRate(netCurrent, item.target);
+            }
         }
         
         // Remove isSpecialRow marker
@@ -445,14 +461,16 @@ class DataProcessor {
     processSubscriptionData(rows) {
         if (!Array.isArray(rows)) return { data: [], isBranch: false };
 
-        // Handle pre-formatted object array (e.g. from DEMO_DATA.subscriptionBranch)
+        // Handle pre-formatted object array
         if (rows.length > 0 && typeof rows[0] === 'object' && !Array.isArray(rows[0])) {
             const isBranch = 'manager1' in rows[0];
             return { data: rows, isBranch };
         }
         
-        // Detect header row (for both Branch and Summary data)
-        const headerRowIdx = rows.findIndex(row => row && (row.includes('담당') || row.includes('지점명') || row.includes('지점') || row.includes('구분')));
+        // Detect header row
+        const headerRowIdx = rows.findIndex(row => row && 
+            (row.includes('담당') || row.includes('지점명') || row.includes('지점') || row.includes('구분')));
+        
         if (headerRowIdx === -1) return { data: [], isBranch: false };
 
         const headers = rows[headerRowIdx];
@@ -460,10 +478,40 @@ class DataProcessor {
 
         if (isBranch) {
             // Complex 18-column Branch structure
-            // We skip 3 header rows based on the image provided
-            const dataRows = rows.slice(headerRowIdx + 3);
+            // Dynamic Header Skipping:
+            // Find the first row that looks like actual data
+            let dataStartIdx = headerRowIdx + 1;
+            
+            // Iterate to find where actual data begins
+            for (let i = headerRowIdx + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                
+                const firstCell = String(row[0] || '').trim();
+                
+                // Skip repeated headers
+                if (firstCell === '담당' || row.includes('담당')) continue;
+                
+                // Skip filter rows (User specific request)
+                if (firstCell.includes('필터') || firstCell.includes('Filter')) continue;
+                
+                // If we found a row that doesn't look like a header/filter, start here
+                dataStartIdx = i;
+                break;
+            }
+
+            const dataRows = rows.slice(dataStartIdx);
             const data = dataRows.map(row => {
                 if (!row || row.length < 5 || !row[3]) return null;
+                
+                const firstCell = String(row[0] || '').trim();
+                
+                // Skip filter rows that might be intermingled
+                if (firstCell.includes('필터') || firstCell.includes('Filter')) return null;
+                
+                // Skip header repetitions
+                if (firstCell === '담당') return null;
+
                 return {
                     manager1: row[0] || '',
                     team: row[1] || '',
@@ -487,29 +535,81 @@ class DataProcessor {
             }).filter(item => item !== null);
             return { data, isBranch: true };
         } else {
-            // New 14-column Summary structure from image
+            // Summary structure (Auto-calculation logic added)
+            // Skip headers to get to data
             const dataRows = rows.slice(headerRowIdx + 1);
+            
+            // First pass: Parse raw values and calculate individual metrics
+            let parsedData = dataRows.map(row => {
+                if (!row || row.length === 0 || !row[0]) return null;
+                
+                // Exclude filter/summary rows
+                const name = String(row[0]).trim();
+                const excludeKeywords = ['필터', '합계', '소계', '총계', 'total', 'sum', 'subtotal', 'filter'];
+                if (excludeKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) {
+                    return null;
+                }
+
+                // Raw Data (Inputs)
+                const nameVal = row[0];
+                const targetAmount = this.parseNumber(row[1]);
+                const targetQty = this.parseNumber(row[2]);
+                const prevMonthAmount = this.parseNumber(row[3]);
+                const currentAmount = this.parseNumber(row[4]);     // 당월 (Recurring)
+                const cashAmount = this.parseNumber(row[5]);        // 일시불 (One-time)
+                
+                // Calculated: Total Amount = Current (Recurring) + One-time
+                // If the user provided a total (row[6]), we could use it, but auto-calc is safer if components exist
+                let totalAmount = this.parseNumber(row[6]);
+                if (currentAmount !== 0 || cashAmount !== 0) {
+                     totalAmount = currentAmount + cashAmount;
+                }
+
+                // Calculated: Achievement (Amount)
+                // If Target is 0, Ach is 0
+                const achAmount = this.calculateAchievementRate(totalAmount, targetAmount);
+
+                // Calculated: Growth (Amount) - Based on Recurring (Current vs Prev)
+                // Note: User methodology seems to be (Current - Prev) / Prev
+                const growthAmount = this.calculateGrowthRate(currentAmount, prevMonthAmount);
+
+                // Qty Data
+                const prevMonthQty = this.parseNumber(row[10]);
+                const currentQty = this.parseNumber(row[11]);
+                const achQty = this.calculateAchievementRate(currentQty, targetQty);
+                const growthQty = this.calculateGrowthRate(currentQty, prevMonthQty);
+
+                return {
+                    name: nameVal,
+                    targetAmount,
+                    targetQty,
+                    prevMonthAmount,
+                    currentAmount,
+                    cashAmount,
+                    totalAmount,
+                    achAmount,
+                    growthAmount,
+                    ratio: 0, // Will calculate in second pass
+                    prevMonthQty,
+                    currentQty,
+                    achQty,
+                    growthQty
+                };
+            }).filter(item => item !== null);
+
+            // Second pass: Calculate Shares ( 비중 )
+            const grandTotal = parsedData.reduce((sum, item) => sum + item.totalAmount, 0);
+
+            parsedData = parsedData.map(item => {
+                let ratio = 0;
+                if (grandTotal !== 0) {
+                    ratio = (item.totalAmount / grandTotal) * 100;
+                }
+                return { ...item, ratio };
+            });
+
             return {
-                data: dataRows.map(row => {
-                    if (!row || row.length === 0 || !row[0]) return null;
-                    // Mapped based on index from the new demo data structure
-                    return {
-                        name: row[0],
-                        targetAmount: this.parseNumber(row[1]),
-                        targetQty: this.parseNumber(row[2]),
-                        prevMonthAmount: this.parseNumber(row[3]),
-                        currentAmount: this.parseNumber(row[4]),
-                        cashAmount: this.parseNumber(row[5]),
-                        totalAmount: this.parseNumber(row[6]),
-                        achAmount: this.parseNumber(row[7]),
-                        growthAmount: this.parseNumber(row[8]),
-                        ratio: this.parseNumber(row[9]),
-                        prevMonthQty: this.parseNumber(row[10]),
-                        currentQty: this.parseNumber(row[11]),
-                        achQty: this.parseNumber(row[12]),
-                        growthQty: this.parseNumber(row[13])
-                    };
-                }).filter(item => item !== null),
+                data: parsedData,
                 isBranch: false
             };
         }
