@@ -209,11 +209,42 @@ class DataProcessor {
         
         if (branchHeaderIdx !== -1) {
             // Branch structure detected: [담당, 팀, 채널, 지점명, 관리자, 목표, 판매금액(4), 신장률(2)]
-            const dataRows = rows.slice(branchHeaderIdx + 3); // Usually 3 header rows
+            
+            // Dynamic Header Skipping:
+            // Find the first row that looks like actual data (has a valid manager/team name and NOT a keyword like filter/total)
+            // We start searching after the detected header row.
+            let dataStartIdx = branchHeaderIdx + 1;
+            for (let i = branchHeaderIdx + 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length === 0) continue;
+                
+                const firstCell = String(row[0] || '').trim();
+                const fourthCell = String(row[3] || '').trim(); // 지점명
+                
+                // Skip if it contains filter/header keywords
+                // 1. Exact match for Header titles
+                if (['담당', '팀', '채널', '지점명', '구분'].includes(firstCell)) continue;
+                
+                // 2. Partial match for Filters/Sums
+                const isFilterOrSum = ['필터', 'filter', '합계', '소계', '총계', 'total', 'sum'].some(
+                    k => firstCell.includes(k) || fourthCell.includes(k)
+                );
+                
+                if (isFilterOrSum) continue;
+
+                // If we reached here, it's not a header or filter
+                if (firstCell.length > 0) {
+                    dataStartIdx = i;
+                    break;
+                }
+            }
+
+            const dataRows = rows.slice(dataStartIdx);
+            
             const data = dataRows.map(row => {
                 if (!row || row.length < 4 || !row[3]) return null;
                 
-                // Exclude filter/summary rows explicitly
+                // Exclude filter/summary rows explicitly (double check)
                 const name = String(row[3]).trim();
                 const excludeKeywords = ['필터', '합계', '소계', '총계', 'total', 'sum', 'subtotal', 'filter'];
                 if (excludeKeywords.some(keyword => name.toLowerCase().includes(keyword.toLowerCase()))) {
@@ -226,19 +257,22 @@ class DataProcessor {
                 const prevMonthClose = this.parseNumber(row[7]);
                 const currentMonth = this.parseNumber(row[8]);
                 
+                // Helper to check if a value is "empty" (undefined, null, or whitespace string)
+                const isEmpty = (val) => val === undefined || val === null || String(val).trim() === '';
+
                 // Auto-calculate if columns 9-11 are missing or empty
                 // Supports both:
                 // 1. Full format (12 columns): 담당~당월(9) + 달성률, 전년比, 전월比(3)
                 // 2. Minimal format (9 columns): 담당~당월만 (auto-calculate rest)
-                const achievement = (row[9] !== undefined && row[9] !== null && row[9] !== '') 
+                const achievement = !isEmpty(row[9])
                     ? this.parseNumber(row[9]) 
                     : this.calculateAchievementRate(currentMonth, target);
                     
-                const growthYoY = (row[10] !== undefined && row[10] !== null && row[10] !== '') 
+                const growthYoY = !isEmpty(row[10])
                     ? this.parseNumber(row[10]) 
                     : this.calculateGrowthRate(currentMonth, prevYearClose);
                     
-                const growthMoM = (row[11] !== undefined && row[11] !== null && row[11] !== '') 
+                const growthMoM = !isEmpty(row[11])
                     ? this.parseNumber(row[11]) 
                     : this.calculateGrowthRate(currentMonth, prevMonthClose);
                 
@@ -306,16 +340,16 @@ class DataProcessor {
             // This supports both:
             // 1. Full format (8 columns): 구분, 목표, 전년마감, 전월마감, 당월, 달성률, 전년比, 전월比
             // 2. Minimal format (5 columns): 구분, 목표, 전년마감, 전월마감, 당월 (auto-calculate rest)
-            // 3. Special rows (양판n담당): MUST include Excel-calculated values
+            // 3. Special rows (양판n담당): May use complex Excel formulas
             let achievement;
             if (row[5] !== undefined && row[5] !== null && row[5] !== '') {
-                // Excel value provided - use it
+                // Excel value provided - use it directly, don't recalculate
                 achievement = this.parseNumber(row[5]);
             } else if (isSpecialRow) {
                 // Special row - will be calculated in second pass
                 achievement = null;
             } else {
-                // Regular row - defer calculation to second pass (for baseline subtraction)
+                // Regular row without provided value - defer calculation to second pass
                 achievement = null;
             }
                 

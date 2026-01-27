@@ -6,6 +6,7 @@ class Dashboard {
         this.dataProcessor = dataProcessor;
         this.evaluationEngine = evaluationEngine;
         this.competitionAnalyzer = competitionAnalyzer;
+        this.masterAIFeedback = new MasterAIFeedback();
         this.charts = {};
         this.processedData = [];
     }
@@ -61,13 +62,14 @@ class Dashboard {
         const thead = document.getElementById('master-thead');
         if (!thead) return;
 
-        // Create Master Headers based on NEW screenshot (21 cols)
+        // Create Master Headers based on NEW screenshot (22 cols with AI Feedback)
         thead.innerHTML = `
             <tr class="nested-header">
                 <th rowspan="3">구분</th>
                 <th rowspan="3">목표</th>
                 <th colspan="6">판매금액</th>
                 <th colspan="13">구독</th>
+                <th rowspan="3" style="background: rgba(102, 126, 234, 0.1); font-weight: 700; min-width: 200px;">🤖 AI 개선점</th>
             </tr>
             <tr class="nested-header">
                 <th rowspan="2">전년<br>마감</th>
@@ -97,8 +99,6 @@ class Dashboard {
                 <th>당월</th>
                 <th>달성률</th>
                 <th>전월비<br>(마감)</th>
-                <!-- AI 피드백 컬럼 (나중에 추가 예정) -->
-                <!-- <th rowspan="3" style="background: rgba(102, 126, 234, 0.1); font-weight: 700;">💬 AI 피드백</th> -->
             </tr>
         `;
     }
@@ -114,6 +114,9 @@ class Dashboard {
         tbody.innerHTML = '';
         data.forEach(item => {
             const row = document.createElement('tr');
+            const aiFeedback = this.masterAIFeedback.formatCompactFeedback(item);
+            const aiDetailedFeedback = this.masterAIFeedback.formatDetailedFeedback(item);
+            
             row.innerHTML = `
                 <td><strong>${item.group}</strong></td>
                 <!-- Sales (Cols 1-7) -->
@@ -148,8 +151,13 @@ class Dashboard {
                 <td class="text-center font-bold">${this.formatPercentage(item.subQtyAchieve)}%</td>
                 <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${this.formatPercentage(item.subQtyMoM)}%</td>
                 
-                <!-- AI Feedback (Col 22) - 나중에 추가 예정 -->
-                <!-- <td class="ai-feedback" style="font-size: 0.85rem; max-width: 250px; padding: 0.75rem;">${this.generateAIFeedback(item)}</td> -->
+                <!-- AI Feedback (Col 22) -->
+                <td class="ai-feedback-cell" style="font-size: 0.85rem; padding: 0.75rem; cursor: pointer; position: relative;" 
+                    title="클릭하여 상세 분석 보기"
+                    onclick="dashboard.showAIFeedbackDetail('${item.group.replace(/'/g, "\\'")}')"
+                    data-detailed-feedback='${aiDetailedFeedback.replace(/'/g, "\'")}'>
+                    ${aiFeedback}
+                </td>
             `;
             tbody.appendChild(row);
         });
@@ -201,7 +209,6 @@ class Dashboard {
                             <td class="text-center" style="background: ${item.achievement >= 100 ? 'rgba(16, 185, 129, 0.1)' : 'transparent'}">${this.formatPercentage(item.achievement)}%</td>
                             <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY >= 0 ? '+' : ''}${this.formatPercentage(item.growthYoY)}%</td>
                             <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM >= 0 ? '+' : ''}${this.formatPercentage(item.growthMoM)}%</td>
-                            <td class="ai-feedback" style="font-size: 0.85rem; max-width: 200px;">${this.generateAIFeedback(item)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
@@ -876,6 +883,100 @@ class Dashboard {
         `;
 
         document.body.insertAdjacentHTML('beforeend', detailHTML);
+    }
+
+    // Show AI Feedback Detail Modal
+    showAIFeedbackDetail(groupName) {
+        const perfData = this.dataProcessor.performanceData || {};
+        const masterData = perfData.master || [];
+        const item = masterData.find(i => i.group === groupName);
+        
+        if (!item) return;
+
+        const feedback = this.masterAIFeedback.generateFeedback(item);
+        
+        let modalHTML = `
+            <div class="modal-overlay" id="ai-feedback-modal" onclick="this.remove()">
+                <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <div>
+                            <h3>🤖 AI 개선 제안</h3>
+                            <p style="margin: 0.5rem 0 0; color: var(--color-text-secondary); font-weight: normal; font-size: 0.9rem;">${groupName}</p>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('ai-feedback-modal').remove()">✕</button>
+                    </div>
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <!-- Status Overview -->
+                        <div class="detail-section" style="margin-bottom: 1.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 8px;">
+                                <div>
+                                    <span style="font-size: 1.5rem;">${feedback.status.icon}</span>
+                                    <strong style="margin-left: 0.5rem; font-size: 1.1rem; color: ${feedback.status.color};">${feedback.status.label}</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <small style="color: var(--color-text-secondary);">우선순위</small><br>
+                                    <span style="padding: 0.25rem 0.75rem; background: ${feedback.priority.color}22; color: ${feedback.priority.color}; border-radius: 4px; font-weight: 600;">
+                                        ${feedback.priority.label}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${feedback.strengths.length > 0 ? `
+                            <div class="detail-section" style="margin-bottom: 1.5rem;">
+                                <h4 style="color: #10b981; margin-bottom: 0.75rem;">✅ 강점</h4>
+                                <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                    ${feedback.strengths.map(s => `<li>${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${feedback.concerns.length > 0 ? `
+                            <div class="detail-section" style="margin-bottom: 1.5rem;">
+                                <h4 style="color: #ef4444; margin-bottom: 0.75rem;">⚠️ 우려사항</h4>
+                                <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                    ${feedback.concerns.map(c => `<li>${c}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        ${feedback.suggestions.length > 0 ? `
+                            <div class="detail-section">
+                                <h4 style="color: #3b82f6; margin-bottom: 0.75rem;">💡 개선 제안</h4>
+                                <ul style="margin: 0; padding-left: 1.5rem; line-height: 1.8;">
+                                    ${feedback.suggestions.map(s => `<li style="margin-bottom: 0.75rem;">${s}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+
+                        <!-- Performance Metrics Summary -->
+                        <div class="detail-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+                            <h4 style="margin-bottom: 1rem;">📊 성과 요약</h4>
+                            <div class="metric-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                                <div style="padding: 0.75rem; background: rgba(102, 126, 234, 0.05); border-radius: 6px;">
+                                    <small style="color: var(--color-text-secondary);">판매 달성률</small><br>
+                                    <strong style="font-size: 1.2rem; color: ${item.achievement >= 100 ? '#10b981' : '#ef4444'};">${this.formatPercentage(item.achievement || 0)}%</strong>
+                                </div>
+                                <div style="padding: 0.75rem; background: rgba(102, 126, 234, 0.05); border-radius: 6px;">
+                                    <small style="color: var(--color-text-secondary);">전년 대비 성장률</small><br>
+                                    <strong style="font-size: 1.2rem; color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'};">${item.growthYoY >= 0 ? '+' : ''}${this.formatPercentage(item.growthYoY || 0)}%</strong>
+                                </div>
+                                <div style="padding: 0.75rem; background: rgba(102, 126, 234, 0.05); border-radius: 6px;">
+                                    <small style="color: var(--color-text-secondary);">구독 금액 달성률</small><br>
+                                    <strong style="font-size: 1.2rem; color: ${item.subAmtAchieve >= 100 ? '#10b981' : '#ef4444'};">${this.formatPercentage(item.subAmtAchieve || 0)}%</strong>
+                                </div>
+                                <div style="padding: 0.75rem; background: rgba(102, 126, 234, 0.05); border-radius: 6px;">
+                                    <small style="color: var(--color-text-secondary);">구독 수량 달성률</small><br>
+                                    <strong style="font-size: 1.2rem; color: ${item.subQtyAchieve >= 100 ? '#10b981' : '#ef4444'};">${this.formatPercentage(item.subQtyAchieve || 0)}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
     // Check and display alerts
