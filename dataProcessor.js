@@ -596,12 +596,7 @@ class DataProcessor {
                 // Skip header repetitions
                 if (firstCell === '담당') return null;
 
-                return {
-                    manager1: row[0] || '',
-                    team: row[1] || '',
-                    channel: row[2] || '',
-                    name: row[3] || '',
-                    manager2: row[4] || '',
+
                 const targetAmount = this.parseNumber(row[5]);
                 const targetQty = this.parseNumber(row[6]);
                 const prevMonthAmount = this.parseNumber(row[7]);
