@@ -2,10 +2,11 @@
 // Handles visualization and data presentation
 
 class Dashboard {
-    constructor(dataProcessor, evaluationEngine, competitionAnalyzer) {
+    constructor(dataProcessor, evaluationEngine, competitionAnalyzer, dashboardHelper) {
         this.dataProcessor = dataProcessor;
         this.evaluationEngine = evaluationEngine;
         this.competitionAnalyzer = competitionAnalyzer;
+        this.dashboardHelper = dashboardHelper;
         this.masterAIFeedback = new MasterAIFeedback();
         this.charts = {};
         this.processedData = [];
@@ -175,6 +176,11 @@ class Dashboard {
             tbody.appendChild(row);
         });
 
+        // Setup checkbox handlers
+        if (this.dashboardHelper) {
+            this.dashboardHelper.setupCheckboxHandlers('master-table');
+        }
+
         // Render analytics for master data
         this.renderMasterAnalytics(data);
     }
@@ -275,6 +281,11 @@ class Dashboard {
             this.currentSalesBranchData = data;
         } else {
             this.currentSalesAllData = data;
+        }
+
+        // Setup checkbox handlers
+        if (this.dashboardHelper) {
+            this.dashboardHelper.setupCheckboxHandlers(tableId);
         }
 
         // Render analytics for sales data
@@ -409,6 +420,11 @@ class Dashboard {
             this.currentSubscriptionBranchData = data;
         } else {
             this.currentSubscriptionAllData = data;
+        }
+
+        // Setup checkbox handlers
+        if (this.dashboardHelper) {
+            this.dashboardHelper.setupCheckboxHandlers(tableId);
         }
 
         // Render analytics for subscription data

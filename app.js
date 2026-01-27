@@ -6,9 +6,12 @@ class App {
         this.dataProcessor = new DataProcessor();
         this.evaluationEngine = new EvaluationEngine();
         this.competitionAnalyzer = new CompetitionAnalyzer();
-        this.dashboard = new Dashboard(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer);
-        this.excelExporter = new ExcelExporter(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer);
+        this.dataProcessor = new DataProcessor();
+        this.evaluationEngine = new EvaluationEngine();
+        this.competitionAnalyzer = new CompetitionAnalyzer();
         this.dashboardHelper = new DashboardHelper();
+        this.dashboard = new Dashboard(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer, this.dashboardHelper);
+        this.excelExporter = new ExcelExporter(this.dataProcessor, this.evaluationEngine, this.competitionAnalyzer);
         
         this.currentSection = 'upload';
         this.init();
@@ -511,7 +514,7 @@ class App {
         const exportMasterSelectedBtn = document.getElementById('export-master-selected-btn');
         if (exportMasterSelectedBtn) {
             exportMasterSelectedBtn.addEventListener('click', () => {
-                const selectedData = this.dashboardHelper.getSelectedRows('master-table');
+                const selectedData = this.dashboardHelper.getSelectedRows('master-table', this.dashboard.currentMasterData);
                 if (selectedData.length === 0) {
                     return this.showToast('선택된 항목이 없습니다.', 'warning');
                 }
@@ -535,7 +538,7 @@ class App {
         const exportSalesAllSelectedBtn = document.getElementById('export-sales-all-selected-btn');
         if (exportSalesAllSelectedBtn) {
             exportSalesAllSelectedBtn.addEventListener('click', () => {
-                const selectedData = this.dashboardHelper.getSelectedRows('sales-all-table');
+                const selectedData = this.dashboardHelper.getSelectedRows('sales-all-table', this.dashboard.currentSalesAllData);
                 if (selectedData.length === 0) {
                     return this.showToast('선택된 항목이 없습니다.', 'warning');
                 }
@@ -559,11 +562,11 @@ class App {
         const exportSalesBranchSelectedBtn = document.getElementById('export-sales-branch-selected-btn');
         if (exportSalesBranchSelectedBtn) {
             exportSalesBranchSelectedBtn.addEventListener('click', () => {
-                const selectedData = this.dashboardHelper.getSelectedRows('sales-branch-table');
+                const selectedData = this.dashboardHelper.getSelectedRows('sales-branch-table', this.dashboard.currentSalesBranchData);
                 if (selectedData.length === 0) {
                     return this.showToast('선택된 항목이 없습니다.', 'warning');
                 }
-                this.excelExporter.exportSalesReport(selectedData);
+                this.excelExporter.exportSalesBranchReport(selectedData);
                 this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
             });
         }
@@ -583,7 +586,7 @@ class App {
         const exportSubscriptionAllSelectedBtn = document.getElementById('export-subscription-all-selected-btn');
         if (exportSubscriptionAllSelectedBtn) {
             exportSubscriptionAllSelectedBtn.addEventListener('click', () => {
-                const selectedData = this.dashboardHelper.getSelectedRows('subscription-all-table');
+                const selectedData = this.dashboardHelper.getSelectedRows('subscription-all-table', this.dashboard.currentSubscriptionAllData);
                 if (selectedData.length === 0) {
                     return this.showToast('선택된 항목이 없습니다.', 'warning');
                 }
@@ -607,11 +610,11 @@ class App {
         const exportSubscriptionBranchSelectedBtn = document.getElementById('export-subscription-branch-selected-btn');
         if (exportSubscriptionBranchSelectedBtn) {
             exportSubscriptionBranchSelectedBtn.addEventListener('click', () => {
-                const selectedData = this.dashboardHelper.getSelectedRows('subscription-branch-table');
+                const selectedData = this.dashboardHelper.getSelectedRows('subscription-branch-table', this.dashboard.currentSubscriptionBranchData);
                 if (selectedData.length === 0) {
                     return this.showToast('선택된 항목이 없습니다.', 'warning');
                 }
-                this.excelExporter.exportSubscriptionReport(selectedData);
+                this.excelExporter.exportSubscriptionBranchReport(selectedData);
                 this.showToast(`선택된 ${selectedData.length}개 항목을 다운로드했습니다.`, 'success');
             });
         }

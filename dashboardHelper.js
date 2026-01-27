@@ -22,8 +22,8 @@ class DashboardHelper {
         const table = document.getElementById(tableId);
         if (!table) return;
 
-        // Get select-all checkbox
-        const selectAllId = tableId.replace('-table', '-select-all');
+        // Get select-all checkbox (matches id in dashboard.js: *-check-all)
+        const selectAllId = tableId.replace('-table', '-check-all');
         const selectAllCheckbox = document.getElementById(selectAllId);
         
         if (selectAllCheckbox) {
@@ -33,10 +33,10 @@ class DashboardHelper {
         }
 
         // Add event listeners to individual row checkboxes
-        const rowCheckboxes = table.querySelectorAll('.row-checkbox');
+        const rowCheckboxes = table.querySelectorAll('tbody input[type="checkbox"]');
         rowCheckboxes.forEach(checkbox => {
             checkbox.addEventListener('change', () => {
-                this.updateRowSelection(checkbox);
+                // this.updateRowSelection(checkbox); // UI selection style if needed
                 this.updateSelectAllState(tableId);
             });
         });
@@ -47,10 +47,10 @@ class DashboardHelper {
         const table = document.getElementById(tableId);
         if (!table) return;
 
-        const checkboxes = table.querySelectorAll('.row-checkbox');
+        const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.checked = checked;
-            this.updateRowSelection(checkbox);
+            // this.updateRowSelection(checkbox);
         });
     }
 
@@ -69,12 +69,13 @@ class DashboardHelper {
     // Update select-all checkbox state
     updateSelectAllState(tableId) {
         const table = document.getElementById(tableId);
-        const selectAllId = tableId.replace('-table', '-select-all');
+        // Correct ID suffix
+        const selectAllId = tableId.replace('-table', '-check-all');
         const selectAllCheckbox = document.getElementById(selectAllId);
         
         if (!table || !selectAllCheckbox) return;
 
-        const allCheckboxes = Array.from(table.querySelectorAll('.row-checkbox'));
+        const allCheckboxes = Array.from(table.querySelectorAll('tbody input[type="checkbox"]'));
         const checkedCheckboxes = allCheckboxes.filter(cb => cb.checked);
 
         if (checkedCheckboxes.length === 0) {
@@ -90,19 +91,18 @@ class DashboardHelper {
     }
 
     // Get selected rows data from a table
-    getSelectedRows(tableId) {
+    getSelectedRows(tableId, data) {
         const table = document.getElementById(tableId);
-        if (!table) return [];
+        if (!table || !data) return [];
 
         const selectedData = [];
-        const checkboxes = table.querySelectorAll('.row-checkbox:checked');
+        const checkboxes = table.querySelectorAll('tbody input[type="checkbox"]:checked');
         
         checkboxes.forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            const index = parseInt(row.getAttribute('data-index'));
+            const index = parseInt(checkbox.getAttribute('data-index'));
             
-            if (!isNaN(index) && this.currentTableData[tableId][index]) {
-                selectedData.push(this.currentTableData[tableId][index]);
+            if (!isNaN(index) && data[index]) {
+                selectedData.push(data[index]);
             }
         });
 
