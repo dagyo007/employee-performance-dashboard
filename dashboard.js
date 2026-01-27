@@ -9,6 +9,12 @@ class Dashboard {
         this.masterAIFeedback = new MasterAIFeedback();
         this.charts = {};
         this.processedData = [];
+        // Store current data handles for selective export
+        this.currentMasterData = [];
+        this.currentSalesAllData = [];
+        this.currentSalesBranchData = [];
+        this.currentSubscriptionAllData = [];
+        this.currentSubscriptionBranchData = [];
     }
 
     // Initialize dashboard with data
@@ -67,6 +73,7 @@ class Dashboard {
         // Create Master Headers based on NEW screenshot (22 cols with AI Feedback)
         thead.innerHTML = `
             <tr class="nested-header">
+                <th rowspan="3" style="width: 40px;"><input type="checkbox" id="master-check-all"></th>
                 <th rowspan="3">구분</th>
                 <th rowspan="3">목표</th>
                 <th colspan="6">판매금액</th>
@@ -113,13 +120,17 @@ class Dashboard {
         // Ensure header is there (idempotent)
         this.renderMasterHeader();
 
+        // Store data for export
+        this.currentMasterData = data;
+
         tbody.innerHTML = '';
-        data.forEach(item => {
+        data.forEach((item, index) => {
             const row = document.createElement('tr');
             const aiFeedback = this.masterAIFeedback.formatCompactFeedback(item);
             const aiDetailedFeedback = this.masterAIFeedback.formatDetailedFeedback(item);
             
             row.innerHTML = `
+                <td class="text-center"><input type="checkbox" class="master-checkbox" data-index="${index}"></td>
                 <td><strong>${item.group}</strong></td>
                 <!-- Sales (Cols 1-7) -->
                 <td class="text-right">${this.formatCurrency(item.target)}</td>
@@ -178,6 +189,7 @@ class Dashboard {
             table.innerHTML = `
                 <thead>
                     <tr class="nested-header">
+                        <th rowspan="2" style="width: 40px;"><input type="checkbox" id="sales-branch-check-all"></th>
                         <th rowspan="2">담당</th>
                         <th rowspan="2">팀</th>
                         <th rowspan="2">채널</th>
@@ -197,8 +209,9 @@ class Dashboard {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.map(item => `
+                    ${data.map((item, index) => `
                         <tr>
+                            <td class="text-center"><input type="checkbox" class="sales-branch-checkbox" data-index="${index}"></td>
                             <td>${item.manager1 || '-'}</td>
                             <td>${item.team || '-'}</td>
                             <td><span class="badge badge-info">${item.channel || '-'}</span></td>
@@ -219,6 +232,7 @@ class Dashboard {
             table.innerHTML = `
                 <thead>
                     <tr class="nested-header">
+                        <th rowspan="2" style="width: 40px;"><input type="checkbox" id="sales-all-check-all"></th>
                         <th rowspan="2">구분</th>
                         <th rowspan="2">목표</th>
                         <th colspan="4">판매금액</th>
@@ -234,8 +248,9 @@ class Dashboard {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.map(item => `
+                    ${data.map((item, index) => `
                         <tr>
+                            <td class="text-center"><input type="checkbox" class="sales-all-checkbox" data-index="${index}"></td>
                             <td><strong>${item.name}</strong></td>
                             <td class="text-right">${this.formatCurrency(item.target)}</td>
                             <td class="text-right">${this.formatCurrency(item.prevYearClose)}</td>
@@ -256,6 +271,12 @@ class Dashboard {
             `;
         }
 
+        if (subType === 'branch') {
+            this.currentSalesBranchData = data;
+        } else {
+            this.currentSalesAllData = data;
+        }
+
         // Render analytics for sales data
         this.renderSalesAnalytics(data, subType);
     }
@@ -270,6 +291,7 @@ class Dashboard {
             table.innerHTML = `
                 <thead>
                     <tr>
+                        <th rowspan="3" style="width: 40px;"><input type="checkbox" id="subscription-branch-check-all"></th>
                         <th rowspan="3">담당</th>
                         <th rowspan="3">팀</th>
                         <th rowspan="3">채널</th>
@@ -299,8 +321,9 @@ class Dashboard {
                     </tr>
                 </thead>
                 <tbody>
-                    ${data.map(item => `
+                    ${data.map((item, index) => `
                         <tr>
+                            <td class="text-center"><input type="checkbox" class="subscription-branch-checkbox" data-index="${index}"></td>
                             <td>${item.manager1}</td>
                             <td>${item.team}</td>
                             <td>${item.channel}</td>
@@ -333,6 +356,7 @@ class Dashboard {
         table.innerHTML = `
             <thead>
                 <tr>
+                    <th rowspan="2" style="width: 40px;"><input type="checkbox" id="subscription-all-check-all"></th>
                     <th rowspan="2">구분</th>
                     <th colspan="2">목표</th>
                     <th colspan="7">금액</th>
@@ -355,8 +379,9 @@ class Dashboard {
                 </tr>
             </thead>
             <tbody>
-                ${data.map(item => `
+                ${data.map((item, index) => `
                     <tr>
+                        <td class="text-center"><input type="checkbox" class="subscription-all-checkbox" data-index="${index}"></td>
                         <td style="font-weight: 600;">${item.name}</td>
                         <td class="text-right">${this.formatCurrency(item.targetAmount || 0)}</td>
                         <td class="text-right">${item.targetQty || 0}</td>
@@ -379,6 +404,12 @@ class Dashboard {
                 `).join('')}
             </tbody>
         `;
+
+        if (subType === 'branch') {
+            this.currentSubscriptionBranchData = data;
+        } else {
+            this.currentSubscriptionAllData = data;
+        }
 
         // Render analytics for subscription data
         this.renderSubscriptionAnalytics(data, subType);

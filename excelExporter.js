@@ -218,15 +218,20 @@ class ExcelExporter {
     exportSubscriptionReport(data) {
         const workbook = XLSX.utils.book_new();
         const exportData = data.map(item => ({
-            '지점명': item.name,
-            '관리자': item.manager,
-            '전월마감': item.prevMonthClose,
-            '당월': item.currentMonth,
-            '전월마감比(%)': item.growthRatio,
+            '구분': item.name,
+            '목표(금액)': item.targetAmount,
+            '목표(수량)': item.targetQty,
+            '전월마감(금액)': item.prevMonthAmount,
+            '당월(금액)': item.currentAmount,
             '일시불': item.cashAmount,
             '금액 합': item.totalAmount,
-            '수량_전월': item.qtyPrevMonth,
-            '수량_당월': item.qtyCurrent
+            '달성률(금액)': item.achAmount,
+            '성장률(금액)': item.growthAmount,
+            '비중(%)': item.ratio,
+            '전월마감(수량)': item.prevMonthQty,
+            '당월(수량)': item.currentQty,
+            '달성률(수량)': item.achQty,
+            '성장률(수량)': item.growthQty
         }));
 
         const ws = XLSX.utils.json_to_sheet(exportData);
