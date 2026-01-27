@@ -139,7 +139,56 @@ class DataProcessor {
                 }
                 break;
         }
+
+        // Always try to link Master data with available Sales/Subscription data
+        this.linkMasterData();
+
         return this.performanceData[type];
+    }
+
+    // Link Master data with Sales and Subscription data
+    linkMasterData() {
+        if (!this.performanceData.master || this.performanceData.master.length === 0) return;
+
+        // Link with Sales Data
+        if (this.performanceData.sales && this.performanceData.sales.length > 0) {
+            this.performanceData.master.forEach(masterItem => {
+                const salesItem = this.performanceData.sales.find(s => s.name === masterItem.group);
+                if (salesItem) {
+                    masterItem.target = salesItem.target;
+                    masterItem.prevYearClose = salesItem.prevYearClose;
+                    masterItem.prevMonthClose = salesItem.prevMonthClose;
+                    masterItem.currentMonth = salesItem.currentMonth;
+                    masterItem.achievement = salesItem.achievement;
+                    masterItem.growthYoY = salesItem.growthYoY;
+                    masterItem.growthMoM = salesItem.growthMoM;
+                }
+            });
+        }
+
+        // Link with Subscription Data
+        if (this.performanceData.subscription && this.performanceData.subscription.length > 0) {
+            this.performanceData.master.forEach(masterItem => {
+                const subItem = this.performanceData.subscription.find(s => s.name === masterItem.group);
+                if (subItem) {
+                    masterItem.subTargetAmt = subItem.targetAmount;
+                    masterItem.subTargetQty = subItem.targetQty;
+                    masterItem.subAmtPrev = subItem.prevMonthAmount;
+                    masterItem.subAmtCurrent = subItem.currentAmount;
+                    masterItem.subOneTime = subItem.cashAmount;
+                    masterItem.subAmtTotal = subItem.totalAmount;
+                    
+                    masterItem.subAmtAchieve = subItem.achAmount;
+                    masterItem.subAmtMoM = subItem.growthAmount;
+                    masterItem.subShare = subItem.ratio;
+
+                    masterItem.subQtyPrev = subItem.prevMonthQty;
+                    masterItem.subQtyCurrent = subItem.currentQty;
+                    masterItem.subQtyAchieve = subItem.achQty;
+                    masterItem.subQtyMoM = subItem.growthQty;
+                }
+            });
+        }
     }
 
     // Process MASTER 관리 data (Complex structure)
@@ -233,7 +282,7 @@ class DataProcessor {
                 
                 const firstCell = String(row[0] || '').trim();
                 
-                // Skip Header/Filter rows
+                // Skip Header/Filter rows including repeated headers
                 // 1. Exact match for Header titles
                 if (['담당', '팀', '채널', '지점명', '구분'].includes(firstCell)) continue;
                 
@@ -243,6 +292,10 @@ class DataProcessor {
                 );
                 
                 if (isFilterOrSum) continue;
+
+                // 3. Check for specific repeated header rows from the screenshot (e.g. empty or just headers)
+                // If row has "목표" in 6th column (index 5) it's likely a header
+                if (row[5] && String(row[5]).includes('목표')) continue;
 
                 // If we reached here, it's not a header or filter
                 if (firstCell.length > 0) {
@@ -258,7 +311,10 @@ class DataProcessor {
                 
                 const firstCell = String(row[0] || '').trim();
                 if (['필터', 'filter', '합계', '소계', '총계', 'total', 'sum'].some(k => firstCell.includes(k))) return null;
-                if (firstCell === '담당') return null;
+                if (firstCell === '담당' || firstCell === '구분') return null;
+                
+                // Extra check for header rows that might have slipped through
+                if (String(row[5]).includes('목표')) return null;
 
                 // Parse RAW data (cols 0-8 are inputs)
                 const target = this.parseNumber(row[5]);

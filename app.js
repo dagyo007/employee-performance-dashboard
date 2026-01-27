@@ -319,8 +319,16 @@ class App {
                 this.dataProcessor.performanceData[type] = result;
             }
 
+            // Always try to link Master data
+            this.dataProcessor.linkMasterData();
+
             // Render the appropriate section
             this.dashboard.renderSection(type);
+            
+            // If we updated Sales or Subscription, also update Master view
+            if (type === 'sales' || type === 'subscription') {
+                this.dashboard.renderSection('master');
+            }
 
             this.showToast(`${type.toUpperCase()} 데이터가 성공적으로 로드되었습니다!`, 'success');
             this.showLoading(false);

@@ -28,9 +28,11 @@ class Dashboard {
                 break;
             case 'sales':
                 this.renderSubSection('sales', 'all');
+                this.renderSubSection('sales', 'branch');
                 break;
             case 'subscription':
                 this.renderSubSection('subscription', 'all');
+                this.renderSubSection('subscription', 'branch');
                 break;
             case 'analytics':
                 this.renderAnalytics();
