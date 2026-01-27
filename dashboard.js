@@ -121,9 +121,9 @@ class Dashboard {
                 <td class="text-right">${this.formatCurrency(item.prevYearClose)}</td>
                 <td class="text-right">${this.formatCurrency(item.prevMonthClose)}</td>
                 <td class="text-right font-bold bg-blue-50">${this.formatCurrency(item.currentMonth)}</td>
-                <td class="text-center font-bold">${item.achievement.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM.toFixed(1)}%</td>
+                <td class="text-center font-bold">${this.formatPercentage(item.achievement)}%</td>
+                <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${this.formatPercentage(item.growthYoY)}%</td>
+                <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${this.formatPercentage(item.growthMoM)}%</td>
                 
                 <!-- Subscription Target (Cols 8-9) -->
                 <td class="text-right">${this.formatCurrency(item.subTargetAmt)}</td>
@@ -136,17 +136,17 @@ class Dashboard {
                 <td class="text-right font-bold">${this.formatCurrency(item.subAmtTotal)}</td>
                 
                 <!-- Subscription Growth Amt (Cols 14-16) -->
-                <td class="text-center font-bold">${item.subAmtAchieve.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.subAmtMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subAmtMoM.toFixed(1)}%</td>
-                <td class="text-center">${item.subShare.toFixed(1)}%</td>
+                <td class="text-center font-bold">${this.formatPercentage(item.subAmtAchieve)}%</td>
+                <td class="text-center" style="color: ${item.subAmtMoM >= 0 ? '#10b981' : '#ef4444'}">${this.formatPercentage(item.subAmtMoM)}%</td>
+                <td class="text-center">${this.formatPercentage(item.subShare)}%</td>
                 
                 <!-- Subscription Qty (Cols 17-18) -->
                 <td class="text-right">${this.formatNumber(item.subQtyPrev)}</td>
                 <td class="text-right font-bold">${this.formatNumber(item.subQtyCurrent)}</td>
                 
                 <!-- Subscription Growth Qty (Cols 19-20) -->
-                <td class="text-center font-bold">${item.subQtyAchieve.toFixed(1)}%</td>
-                <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${item.subQtyMoM.toFixed(1)}%</td>
+                <td class="text-center font-bold">${this.formatPercentage(item.subQtyAchieve)}%</td>
+                <td class="text-center" style="color: ${item.subQtyMoM >= 0 ? '#10b981' : '#ef4444'}">${this.formatPercentage(item.subQtyMoM)}%</td>
                 
                 <!-- AI Feedback (Col 22) - 나중에 추가 예정 -->
                 <!-- <td class="ai-feedback" style="font-size: 0.85rem; max-width: 250px; padding: 0.75rem;">${this.generateAIFeedback(item)}</td> -->
@@ -198,9 +198,9 @@ class Dashboard {
                             <td class="text-right">${this.formatCurrency(item.prevYearClose)}</td>
                             <td class="text-right">${this.formatCurrency(item.prevMonthClose)}</td>
                             <td class="text-right" style="font-weight: bold; background: rgba(102, 126, 234, 0.1);">${this.formatCurrency(item.currentMonth)}</td>
-                            <td class="text-center" style="background: ${item.achievement >= 100 ? 'rgba(16, 185, 129, 0.1)' : 'transparent'}">${item.achievement.toFixed(1)}%</td>
-                            <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY >= 0 ? '+' : ''}${item.growthYoY.toFixed(1)}%</td>
-                            <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM >= 0 ? '+' : ''}${item.growthMoM.toFixed(1)}%</td>
+                            <td class="text-center" style="background: ${item.achievement >= 100 ? 'rgba(16, 185, 129, 0.1)' : 'transparent'}">${this.formatPercentage(item.achievement)}%</td>
+                            <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">${item.growthYoY >= 0 ? '+' : ''}${this.formatPercentage(item.growthYoY)}%</td>
+                            <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">${item.growthMoM >= 0 ? '+' : ''}${this.formatPercentage(item.growthMoM)}%</td>
                             <td class="ai-feedback" style="font-size: 0.85rem; max-width: 200px;">${this.generateAIFeedback(item)}</td>
                         </tr>
                     `).join('')}
@@ -233,13 +233,13 @@ class Dashboard {
                             <td class="text-right">${this.formatCurrency(item.prevMonthClose)}</td>
                             <td class="text-right" style="background: rgba(102, 126, 234, 0.1); font-weight: bold;">${this.formatCurrency(item.currentMonth)}</td>
                             <td class="text-center" style="background: ${item.achievement >= 100 ? 'rgba(16, 185, 129, 0.1)' : 'transparent'}">
-                                ${item.achievement.toFixed(1)}%
+                                ${this.formatPercentage(item.achievement)}%
                             </td>
                             <td class="text-center" style="color: ${item.growthYoY >= 0 ? '#10b981' : '#ef4444'}">
-                                ${item.growthYoY >= 0 ? '+' : ''}${item.growthYoY.toFixed(1)}%
+                                ${item.growthYoY >= 0 ? '+' : ''}${this.formatPercentage(item.growthYoY)}%
                             </td>
                             <td class="text-center" style="color: ${item.growthMoM >= 0 ? '#10b981' : '#ef4444'}">
-                                ${item.growthMoM >= 0 ? '+' : ''}${item.growthMoM.toFixed(1)}%
+                                ${item.growthMoM >= 0 ? '+' : ''}${this.formatPercentage(item.growthMoM)}%
                             </td>
                         </tr>
                     `).join('')}
@@ -303,16 +303,16 @@ class Dashboard {
                             <td class="text-right">${this.formatCurrency(item.currentAmount || 0)}</td>
                             <td class="text-right">${this.formatCurrency(item.cashAmount || 0)}</td>
                             <td class="text-right" style="font-weight: bold; background: rgba(102, 126, 234, 0.1);">${this.formatCurrency(item.totalAmount || 0)}</td>
-                            <td class="text-center">${(item.achAmount || 0).toFixed(1)}%</td>
+                            <td class="text-center">${this.formatPercentage(item.achAmount || 0)}%</td>
                             <td class="text-center" style="color: ${item.growthAmount >= 0 ? '#10b981' : '#ef4444'}">
-                                ${item.growthAmount >= 0 ? '▲' : '△'}${Math.abs(item.growthAmount).toFixed(1)}
+                                ${item.growthAmount >= 0 ? '▲' : '△'}${this.formatPercentage(Math.abs(item.growthAmount))}
                             </td>
-                            <td class="text-center">${(item.ratio || 0).toFixed(1)}%</td>
+                            <td class="text-center">${this.formatPercentage(item.ratio || 0)}%</td>
                             <td class="text-right">${item.prevMonthQty || 0}</td>
                             <td class="text-right">${item.currentQty || 0}</td>
-                            <td class="text-center">${(item.achQty || 0).toFixed(1)}%</td>
+                            <td class="text-center">${this.formatPercentage(item.achQty || 0)}%</td>
                             <td class="text-center" style="color: ${item.growthQty >= 0 ? '#10b981' : '#ef4444'}">
-                                ${item.growthQty >= 0 ? '▲' : '△'}${Math.abs(item.growthQty).toFixed(1)}
+                                ${item.growthQty >= 0 ? '▲' : '△'}${this.formatPercentage(Math.abs(item.growthQty))}
                             </td>
                         </tr>
                     `).join('')}
@@ -361,16 +361,16 @@ class Dashboard {
                             `<td class="text-right" style="font-weight: bold; background: rgba(102, 126, 234, 0.1);">${this.formatCurrency(item.totalAmount || 0)}</td>` :
                              `<td class="text-center" style="color: #ccc;">#######</td>`
                         }
-                        <td class="text-center">${(item.achAmount || 0).toFixed(1)}</td>
+                        <td class="text-center">${this.formatPercentage(item.achAmount || 0)}</td>
                         <td class="text-center" style="color: ${item.growthAmount >= 0 ? '#10b981' : '#ef4444'}">
-                            ${item.growthAmount >= 0 ? '' : '△'}${Math.abs(item.growthAmount).toFixed(1)}
+                            ${item.growthAmount >= 0 ? '' : '△'}${this.formatPercentage(Math.abs(item.growthAmount))}
                         </td>
-                        <td class="text-center" style="background: ${item.ratio >= 10 ? 'rgba(16, 185, 129, 0.2)' : 'transparent'}">${(item.ratio || 0).toFixed(1)}</td>
+                        <td class="text-center" style="background: ${item.ratio >= 10 ? 'rgba(16, 185, 129, 0.2)' : 'transparent'}">${this.formatPercentage(item.ratio || 0)}</td>
                         <td class="text-right">${item.prevMonthQty || 0}</td>
                         <td class="text-right">${item.currentQty || 0}</td>
-                        <td class="text-center">${item.achQty !== 0 ? (item.achQty || 0).toFixed(1) : ''}</td>
+                        <td class="text-center">${item.achQty !== 0 ? this.formatPercentage(item.achQty || 0) : ''}</td>
                          <td class="text-center" style="color: ${item.growthQty >= 0 ? '#10b981' : '#ef4444'}">
-                            ${Math.abs(item.growthQty) > 0 ? (item.growthQty >= 0 ? '' : '△') + Math.abs(item.growthQty).toFixed(1) : ''}
+                            ${Math.abs(item.growthQty) > 0 ? (item.growthQty >= 0 ? '' : '△') + this.formatPercentage(Math.abs(item.growthQty)) : ''}
                         </td>
                     </tr>
                 `).join('')}
@@ -389,6 +389,12 @@ class Dashboard {
     // Helper: Format number
     formatNumber(val) {
         return new Intl.NumberFormat('ko-KR').format(Math.round(val));
+    }
+
+    // Helper: Format percentage with floor rounding (내림)
+    formatPercentage(val, decimals = 1) {
+        const multiplier = Math.pow(10, decimals);
+        return (Math.floor(val * multiplier) / multiplier).toFixed(decimals);
     }
 
     // Show empty state
@@ -416,8 +422,8 @@ class Dashboard {
         ).length;
 
         document.getElementById('total-stores').textContent = totalStores;
-        document.getElementById('avg-score').textContent = avgScore.toFixed(1);
-        document.getElementById('avg-ms').textContent = avgMs.toFixed(1) + '%';
+        document.getElementById('avg-score').textContent = this.formatPercentage(avgScore);
+        document.getElementById('avg-ms').textContent = this.formatPercentage(avgMs) + '%';
         document.getElementById('excellent-count').textContent = excellentCount;
     }
 
@@ -662,7 +668,7 @@ class Dashboard {
                         borderWidth: 1,
                         padding: 12,
                         callbacks: {
-                            label: (context) => context.dataset.label + ': ' + context.parsed.x.toFixed(1) + '%'
+                            label: (context) => context.dataset.label + ': ' + this.formatPercentage(context.parsed.x) + '%'
                         }
                     }
                 },
@@ -714,7 +720,7 @@ class Dashboard {
                         <span style="color: var(--color-text-secondary);">/ ${store.evaluation.최대점수}</span>
                     </div>
                     <div class="progress-bar" style="margin-top: 0.375rem;">
-                        <div class="progress-fill" style="width: ${(store.evaluation.scoreRatio * 100).toFixed(0)}%; background: ${evalLevel.color};"></div>
+                        <div class="progress-fill" style="width: ${this.formatPercentage(store.evaluation.scoreRatio * 100)}%; background: ${evalLevel.color};"></div>
                     </div>
                 </td>
                 <td><span class="badge badge-${evalLevel.class}">${evalLevel.icon} ${evalLevel.label}</span></td>
@@ -723,7 +729,7 @@ class Dashboard {
                 <td>${store.evaluation['M&B평점']?.toFixed(1) || 'N/A'}</td>
                 <td>${store.evaluation.구독평점?.toFixed(1) || 'N/A'}</td>
                 <td>
-                    ${store.competition?.currentMs ? store.competition.currentMs.toFixed(1) + '%' : 'N/A'}
+                    ${store.competition?.currentMs ? this.formatPercentage(store.competition.currentMs) + '%' : 'N/A'}
                     <br>
                     <small style="color: ${compAnalysis.msStatus.class === 'excellent' || compAnalysis.msStatus.class === 'good' ? '#10b981' : '#ef4444'};">
                         ${compAnalysis.msStatus.diff || ''}
@@ -939,8 +945,8 @@ class Dashboard {
 
         // Update summary cards
         document.getElementById('analytics-total-count').textContent = totalCount;
-        document.getElementById('analytics-avg-achievement').textContent = avgAchievement.toFixed(1) + '%';
-        document.getElementById('analytics-avg-growth').textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById('analytics-avg-achievement').textContent = this.formatPercentage(avgAchievement) + '%';
+        document.getElementById('analytics-avg-growth').textContent = this.formatPercentage(avgGrowth) + '%';
         document.getElementById('analytics-excellent-count').textContent = excellentCount;
 
         // Render charts
@@ -1031,7 +1037,7 @@ class Dashboard {
                     <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
                     <td><strong>${item.name || item.group || '-'}</strong></td>
                     <td style="text-align: right;">${this.formatCurrency(item.currentMonth || item.currentAmount || 0)}</td>
-                    <td style="text-align: center; font-weight: 600; color: ${(item.achievement || 0) >= 100 ? '#10b981' : '#f59e0b'};">${(item.achievement || 0).toFixed(1)}%</td>
+                    <td style="text-align: center; font-weight: 600; color: ${(item.achievement || 0) >= 100 ? '#10b981' : '#f59e0b'};">${this.formatPercentage(item.achievement || 0)}%</td>
                 `;
                 topTableBody.appendChild(tr);
             });
@@ -1050,7 +1056,7 @@ class Dashboard {
                     <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
                     <td><strong>${item.name || item.group || '-'}</strong></td>
                     <td style="text-align: right;">${this.formatCurrency(item.currentMonth || item.currentAmount || 0)}</td>
-                    <td style="text-align: center; font-weight: 600; color: ${(item.achievement || 0) >= 100 ? '#10b981' : '#ef4444'};">${(item.achievement || 0).toFixed(1)}%</td>
+                    <td style="text-align: center; font-weight: 600; color: ${(item.achievement || 0) >= 100 ? '#10b981' : '#ef4444'};">${this.formatPercentage(item.achievement || 0)}%</td>
                 `;
                 bottomTableBody.appendChild(tr);
             });
@@ -1130,8 +1136,8 @@ class Dashboard {
 
         // Update stat cards
         document.getElementById('master-total-count').textContent = totalCount;
-        document.getElementById('master-avg-achievement').textContent = avgAchievement.toFixed(1) + '%';
-        document.getElementById('master-avg-growth').textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById('master-avg-achievement').textContent = this.formatPercentage(avgAchievement) + '%';
+        document.getElementById('master-avg-growth').textContent = this.formatPercentage(avgGrowth) + '%';
         document.getElementById('master-excellent-count').textContent = excellentCount;
 
         // Render charts
@@ -1156,8 +1162,8 @@ class Dashboard {
 
         // Update stat cards
         document.getElementById(`${prefix}-total-count`).textContent = totalCount;
-        document.getElementById(`${prefix}-avg-achievement`).textContent = avgAchievement.toFixed(1) + '%';
-        document.getElementById(`${prefix}-avg-growth`).textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById(`${prefix}-avg-achievement`).textContent = this.formatPercentage(avgAchievement) + '%';
+        document.getElementById(`${prefix}-avg-growth`).textContent = this.formatPercentage(avgGrowth) + '%';
         document.getElementById(`${prefix}-excellent-count`).textContent = excellentCount;
 
         // Render charts
@@ -1183,8 +1189,8 @@ class Dashboard {
 
         // Update stat cards
         document.getElementById(`${prefix}-total-count`).textContent = totalCount;
-        document.getElementById(`${prefix}-avg-achievement`).textContent = avgAchievement.toFixed(1) + '%';
-        document.getElementById(`${prefix}-avg-growth`).textContent = avgGrowth.toFixed(1) + '%';
+        document.getElementById(`${prefix}-avg-achievement`).textContent = this.formatPercentage(avgAchievement) + '%';
+        document.getElementById(`${prefix}-avg-growth`).textContent = this.formatPercentage(avgGrowth) + '%';
         document.getElementById(`${prefix}-excellent-count`).textContent = excellentCount;
 
         // Render charts (use achAmount as achievement metric)
@@ -1270,7 +1276,7 @@ class Dashboard {
         topItems.forEach((item, idx) => {
             const tr = document.createElement('tr');
             const name = item.name || item.group || '-';
-            const achievement = (item[achievementField] || 0).toFixed(1);
+            const achievement = this.formatPercentage(item[achievementField] || 0);
             
             tr.innerHTML = `
                 <td style="text-align: center; font-weight: 600;">${idx + 1}</td>
