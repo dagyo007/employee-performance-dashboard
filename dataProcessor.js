@@ -148,6 +148,34 @@ class DataProcessor {
 
     // Link Master data with Sales and Subscription data
     linkMasterData() {
+        // Validation for safety
+        if (!this.performanceData) this.performanceData = {};
+
+        // Auto-generate Master rows if empty (from Sales/Sub)
+        if (!this.performanceData.master || this.performanceData.master.length === 0) {
+            const groups = new Set();
+            
+            // Collect groups from Sales
+            if (this.performanceData.sales) {
+                this.performanceData.sales.forEach(s => groups.add(s.name));
+            }
+            // Collect groups from Subscription
+            if (this.performanceData.subscription) {
+                this.performanceData.subscription.forEach(s => groups.add(s.name));
+            }
+            
+            // Create initial Master structure
+            if (groups.size > 0) {
+                this.performanceData.master = Array.from(groups).map(name => ({
+                    group: name,
+                    // Initialize other fields safely
+                    target: 0, prevYearClose: 0, prevMonthClose: 0, currentMonth: 0, achievement: 0, growthYoY: 0, growthMoM: 0,
+                    subTargetAmt: 0, subTargetQty: 0, subAmtPrev: 0, subAmtCurrent: 0, subOneTime: 0, subAmtTotal: 0, subAmtAchieve: 0, subAmtMoM: 0, subShare: 0,
+                    subQtyPrev: 0, subQtyCurrent: 0, subQtyAchieve: 0, subQtyMoM: 0
+                }));
+            }
+        }
+
         if (!this.performanceData.master || this.performanceData.master.length === 0) return;
 
         // Link with Sales Data
@@ -166,7 +194,7 @@ class DataProcessor {
             });
         }
 
-        // Link with Subscription Data
+        // Link with Subscription Data (matches text structure)
         if (this.performanceData.subscription && this.performanceData.subscription.length > 0) {
             this.performanceData.master.forEach(masterItem => {
                 const subItem = this.performanceData.subscription.find(s => s.name === masterItem.group);
@@ -574,21 +602,76 @@ class DataProcessor {
                     channel: row[2] || '',
                     name: row[3] || '',
                     manager2: row[4] || '',
-                    targetAmount: this.parseNumber(row[5]),
-                    targetQty: this.parseNumber(row[6]),
-                    prevMonthAmount: this.parseNumber(row[7]),
-                    currentAmount: this.parseNumber(row[8]),
-                    cashAmount: this.parseNumber(row[9]),
-                    totalAmount: this.parseNumber(row[10]),
-                    achAmount: this.parseNumber(row[11]),
-                    growthAmount: this.parseNumber(row[12]),
-                    ratio: this.parseNumber(row[13]),
-                    prevMonthQty: this.parseNumber(row[14]),
-                    currentQty: this.parseNumber(row[15]),
-                    achQty: this.parseNumber(row[16]),
-                    growthQty: this.parseNumber(row[17])
+                const targetAmount = this.parseNumber(row[5]);
+                const targetQty = this.parseNumber(row[6]);
+                const prevMonthAmount = this.parseNumber(row[7]);
+                const currentAmount = this.parseNumber(row[8]);
+                const cashAmount = this.parseNumber(row[9]);
+                
+                // Auto-calculate Total Amount if missing or 0 (when components exist)
+                let totalAmount = this.parseNumber(row[10]);
+                if ((!totalAmount || totalAmount === 0) && (currentAmount !== 0 || cashAmount !== 0)) {
+                    totalAmount = currentAmount + cashAmount;
+                }
+
+                // Auto-calculate Achievement (Amount)
+                // Use input if exists, otherwise calc
+                let achAmount = this.parseNumber(row[11]);
+                if ((!achAmount || achAmount === 0) && targetAmount > 0) {
+                    achAmount = this.calculateAchievementRate(totalAmount, targetAmount);
+                }
+
+                // Auto-calculate Growth (Amount) - Recurring vs Recurring (like Summary)
+                let growthAmount = this.parseNumber(row[12]);
+                if (!growthAmount && prevMonthAmount > 0) {
+                     growthAmount = this.calculateGrowthRate(currentAmount, prevMonthAmount);
+                }
+
+                const prevMonthQty = this.parseNumber(row[14]);
+                const currentQty = this.parseNumber(row[15]);
+                
+                // Auto-calculate Achievement (Qty)
+                let achQty = this.parseNumber(row[16]);
+                if ((!achQty || achQty === 0) && targetQty > 0) {
+                    achQty = this.calculateAchievementRate(currentQty, targetQty);
+                }
+
+                // Auto-calculate Growth (Qty)
+                let growthQty = this.parseNumber(row[17]);
+                if (!growthQty && prevMonthQty > 0) {
+                    growthQty = this.calculateGrowthRate(currentQty, prevMonthQty);
+                }
+
+                return {
+                    manager1: row[0] || '',
+                    team: row[1] || '',
+                    channel: row[2] || '',
+                    name: row[3] || '',
+                    manager2: row[4] || '',
+                    targetAmount,
+                    targetQty,
+                    prevMonthAmount,
+                    currentAmount,
+                    cashAmount,
+                    totalAmount,
+                    achAmount,
+                    growthAmount,
+                    ratio: this.parseNumber(row[13]), // Calculated in pass 2
+                    prevMonthQty,
+                    currentQty,
+                    achQty,
+                    growthQty
                 };
             }).filter(item => item !== null);
+
+            // Second Pass: Calculate Ratio (Share)
+            const branchGrandTotal = data.reduce((sum, item) => sum + item.totalAmount, 0);
+            data.forEach(item => {
+                if (item.ratio === 0 && branchGrandTotal > 0) {
+                    item.ratio = (item.totalAmount / branchGrandTotal) * 100;
+                }
+            });
+
             return { data, isBranch: true };
         } else {
             // Summary structure (Auto-calculation logic added)
